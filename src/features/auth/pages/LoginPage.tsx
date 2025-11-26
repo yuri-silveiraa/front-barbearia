@@ -1,27 +1,36 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginData } from "../types";
-import { loginService } from "../../../api/auth/auth.service";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../contexts/AuthContext";
+
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  TextField,
+  Typography
+} from "@mui/material";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [error, setError] = useState("");
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting }
+  } = useForm<LoginData>({
     resolver: zodResolver(loginSchema)
   });
 
   async function onSubmit(data: LoginData) {
     try {
       setError("");
-
-      const { token, user } = await loginService(data);
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-
+      await login(data);
       navigate("/reservas");
     } catch (err: any) {
       setError(err.response?.data?.message || "Credenciais inválidas");
@@ -29,51 +38,50 @@ export function LoginPage() {
   }
 
   return (
-    <div style={{
-      maxWidth: "400px",
-      margin: "80px auto",
-      padding: "20px",
-      border: "1px solid #ccc",
-      borderRadius: "8px"
-    }}>
-      <h2>Login</h2>
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      <Card sx={{ width: 400 }}>
+        <CardContent>
+          <Typography variant="h5" mb={2}>
+            Login
+          </Typography>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        
-        <label>Email</label>
-        <input
-          type="email"
-          {...register("email")}
-          style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-        />
-        {errors.email && <p style={{ color: "red" }}>{errors.email.message}</p>}
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <TextField
+              label="Email"
+              type="email"
+              fullWidth
+              margin="normal"
+              {...register("email")}
+              error={!!errors.email}
+              helperText={errors.email?.message}
+            />
 
-        <label>Senha</label>
-        <input
-          type="password"
-          {...register("password")}
-          style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-        />
-        {errors.password && <p style={{ color: "red" }}>{errors.password.message}</p>}
+            <TextField
+              label="Senha"
+              type="password"
+              fullWidth
+              margin="normal"
+              {...register("password")}
+              error={!!errors.password}
+              helperText={errors.password?.message}
+            />
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && (
+              <Typography color="error" mt={1}>{error}</Typography>
+            )}
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          style={{
-            width: "100%",
-            padding: "10px",
-            background: "#000",
-            color: "#fff",
-            cursor: "pointer",
-            borderRadius: "6px",
-            marginTop: "10px"
-          }}
-        >
-          {isSubmitting ? "Entrando..." : "Entrar"}
-        </button>
-      </form>
-    </div>
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              sx={{ mt: 2 }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Entrando..." : "Entrar"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
