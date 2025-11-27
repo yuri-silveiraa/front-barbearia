@@ -4,7 +4,6 @@ import { loginSchema, type LoginData } from "../types";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
-
 import {
   Box,
   Button,
@@ -33,19 +32,24 @@ export function LoginPage() {
       await login(data);
       navigate("/reservas");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Credenciais inválidas");
+      setError(err.response?.data?.message );
     }
   }
 
   return (
     <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-      <Card sx={{ width: 400 }}>
-        <CardContent>
+      <Card sx={{ width: 400, padding: 2 }}>
+        <CardContent sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <Typography variant="h5" mb={2}>
             Login
           </Typography>
 
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit(onSubmit)();
+            }}
+          >
             <TextField
               label="Email"
               type="email"
