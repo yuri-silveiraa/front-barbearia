@@ -36,7 +36,7 @@ export function MainLayout() {
           </IconButton>
 
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Bar da Pitbull — Sistema de Reservas
+            Barbearia Douglas
           </Typography>
 
           <Typography variant="subtitle1" sx={{ mr: 2 }}>

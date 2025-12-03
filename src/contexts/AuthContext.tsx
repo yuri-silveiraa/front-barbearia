@@ -23,18 +23,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   useEffect(() => {
+  try {
     const storagedUser = localStorage.getItem("user");
-    if (storagedUser) {
+
+    if (storagedUser && storagedUser !== "undefined") {
       setUser(JSON.parse(storagedUser));
     }
-    setLoadingAuth(false);
-  }, []);
+  } catch (error) {
+    console.error("Erro ao ler usuário do localStorage:", error);
+    localStorage.removeItem("user");
+  }
+
+  setLoadingAuth(false);
+}, []);
+
 
   async function login(data: LoginData) {
     const result = await loginService(data);
 
     localStorage.setItem("token", result.token);
     localStorage.setItem("user", JSON.stringify(result.user));
+    console.log("RESULT DO LOGIN:", result);
 
     setUser(result.user);
   }
@@ -44,6 +53,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("user");
     setUser(null);
   }
+
+  console.log("USER:", user);
+  console.log("AUTH:", !!user);
+  console.log("LOADING:", loadingAuth);
+
 
   return (
     <AuthContext.Provider value={{

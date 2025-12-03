@@ -4,7 +4,7 @@ import { ListaReservasPage } from "./../features/reservas/pages/ListaReservasPag
 import { PrivateRoute } from "./privateRoutes";
 import { MainLayout } from "./../layouts/MainLayout";
 
-export default function App() {
+export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
