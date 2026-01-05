@@ -3,6 +3,7 @@ import { LoginPage } from "./../features/auth/pages/LoginPage";
 import { ListaReservasPage } from "./../features/reservas/pages/ListaReservasPage";
 import { PrivateRoute } from "./privateRoutes";
 import { MainLayout } from "./../layouts/MainLayout";
+import CriarReservaPage from "../features/reservas/pages/CriarReservaPage";
 
 export default function AppRoutes() {
   return (
@@ -19,6 +20,7 @@ export default function AppRoutes() {
           }
         >
           <Route path="reservas" element={<ListaReservasPage />} />
+          <Route path="reservas/create" element={<CriarReservaPage />} />
         </Route>
 
       </Routes>
