@@ -32,7 +32,10 @@ export function LoginPage() {
       await login(data);
       navigate("/reservas");
     } catch (err: any) {
-      setError(err.response?.data?.message );
+      setError(err.response?.data?.message);
+      if (!err.response) {
+        setError("Erro de conexão. Tente novamente mais tarde.");
+      }
     }
   }
 
