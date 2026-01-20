@@ -43,7 +43,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     localStorage.setItem("token", result.token);
     localStorage.setItem("user", JSON.stringify(result.user));
-    console.log("RESULT DO LOGIN:", result);
 
     setUser(result.user);
   }

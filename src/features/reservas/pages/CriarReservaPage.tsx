@@ -13,6 +13,7 @@ import {
   TextField, 
   Typography 
 } from "@mui/material";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export default function CriarReservaPage() {
   const [barbers, setBarbers] = useState<any[]>([]);
@@ -23,7 +24,7 @@ export default function CriarReservaPage() {
   const [serviceId, setServiceId] = useState("");
   const [timeId, setTimeId] = useState<any>("");
 
-  const clientId = localStorage.getItem("clientId") || "";
+  const { user } = useAuth();
 
   useEffect(() => {
     loadInitialData();
@@ -54,7 +55,7 @@ export default function CriarReservaPage() {
   const handleCreate = async () => {
     await criarReserva({
       barberId,
-      clientId,
+      clientId: user?.id || "",
       serviceId,
       timeId
     });

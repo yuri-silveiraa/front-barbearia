@@ -6,6 +6,5 @@ export async function loginService(data: LoginData) {
   if (response.status === 401){
     alert(response.data.message);
   }
-  console.log(response.data.data);
   return response.data;
 }
