@@ -6,9 +6,6 @@ import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "./theme";
 import App from './App.tsx';
 import { CssBaseline } from '@mui/material';
-import dotenv from 'dotenv';
-
-dotenv.config()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
