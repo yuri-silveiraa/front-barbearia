@@ -19,7 +19,7 @@ export async function criarReserva(payload: {
   clientId: string;
   barberId: string;
   serviceId: string;
-  timeId: Date;
+  timeId: string;
 }): Promise<Reserva> {
   const { data } = await api.post("/appointment/create", payload);
   return data;
