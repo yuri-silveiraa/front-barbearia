@@ -19,7 +19,7 @@ export function ListaReservasPage() {
   const navigate = useNavigate();
 
   const statusColor = {
-    SCHEDULED: "blue",
+    SCHEDULED: "cyan",
     COMPLETED: "green",
     CANCELED: "red",
   };
@@ -50,7 +50,7 @@ export function ListaReservasPage() {
   return (
     <Box sx={{ px: 2 }}>
       <Typography variant="h5" sx={{ mb: 2 }}>
-        Reservas
+        Agendamentos
       </Typography>
 
       <Button
@@ -59,7 +59,7 @@ export function ListaReservasPage() {
         fullWidth
         onClick={() => navigate("/reservas/create")}
       >
-        Nova Reserva
+        Novo Agendamento
       </Button>
 
       <Paper sx={{ p: 1 }}>

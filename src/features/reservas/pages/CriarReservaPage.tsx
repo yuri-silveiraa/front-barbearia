@@ -1,132 +1,214 @@
 import { useEffect, useState } from "react";
-import { 
-  getBarbers, 
-  getServices, 
-  getTimesByBarber, 
-  criarReserva
+import { useNavigate } from "react-router-dom";
+import {
+  getBarbers,
+  getServices,
+  getTimesByBarber,
+  criarReserva,
 } from "../../../api/reservas/reserva.service";
-
-import { 
-  Box, 
-  Button, 
-  MenuItem, 
-  TextField, 
-  Typography 
-} from "@mui/material";
 import { useAuth } from "../../../contexts/AuthContext";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Snackbar,
+  Typography,
+  Alert,
+} from "@mui/material";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import SelectBarber from "../components/SelectBarber";
+import SelectService from "../components/SelectService";
+import CalendarTimePicker from "../components/SelectCalendarTimePicker";
+import ErrorAlert from "../../../components/ErrorAlert";
+
+const reservaSchema = z.object({
+  barberId: z.string().min(1, "Selecione um barbeiro"),
+  serviceId: z.string().min(1, "Selecione um serviço"),
+  timeId: z.string().min(1, "Selecione um horário"),
+});
+
+type ReservaForm = z.infer<typeof reservaSchema>;
 
 export default function CriarReservaPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [barbers, setBarbers] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [times, setTimes] = useState<any[]>([]);
 
-  const [barberId, setBarberId] = useState("");
-  const [serviceId, setServiceId] = useState("");
-  const [timeId, setTimeId] = useState<any>("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const { user } = useAuth();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    watch,
+    reset,
+  } = useForm<ReservaForm>({
+    resolver: zodResolver(reservaSchema),
+    defaultValues: { barberId: "", serviceId: "", timeId: "" },
+  });
+
+  const selectedBarberId = watch("barberId");
 
   useEffect(() => {
     loadInitialData();
   }, []);
 
-  const loadInitialData = async () => {
-    const barbersRes = await getBarbers();
-    const servicesRes = await getServices();
-
-    console.log("BARBEIROS:", barbersRes);
-    console.log("SERVIÇOS:", servicesRes);
-    setBarbers(barbersRes);
-    setServices(servicesRes);
-  };
-
   useEffect(() => {
-    if (barberId) {
-      loadTimes(barberId);
+    if (selectedBarberId) {
+      loadTimes(selectedBarberId);
+    } else {
+      setTimes([]); 
     }
-  }, [barberId]);
+  }, [selectedBarberId]);
 
-  const loadTimes = async (id: string) => {
-    const res = await getTimesByBarber(id);
-    console.log("Horarios", res);
-    setTimes(res);
+  const loadInitialData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [barbersRes, servicesRes] = await Promise.all([
+        getBarbers(),
+        getServices(),
+      ]);
+      setBarbers(barbersRes || []);
+      setServices(servicesRes || []);
+    } catch (err: any) {
+      setError("Erro ao carregar dados iniciais: " + (err.message || "Tente novamente"));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCreate = async () => {
-    await criarReserva({
-      barberId,
-      clientId: user?.id || "",
-      serviceId,
-      timeId
-    });
+  const loadTimes = async (barberId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getTimesByBarber(barberId);
+      setTimes(res || []);
+    } catch (err: any) {
+      setError("Erro ao carregar horários: " + (err.message || "Tente novamente"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    alert("Reserva criada com sucesso!");
+  const onSubmit = async (data: ReservaForm) => {
+    if (!user?.id) {
+      setError("Usuário não autenticado. Faça login novamente.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      await criarReserva({
+        barberId: data.barberId,
+        clientId: user.id,
+        serviceId: data.serviceId,
+        timeId: data.timeId,
+      });
+      setSuccessMessage("Reserva criada com sucesso!");
+      reset();
+      setTimeout(() => navigate("/reservas"), 2000);
+    } catch (err: any) {
+      setError("Erro ao criar reserva: " + (err.response?.data.message || "Verifique os dados"));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Box p={3}>
-      <Typography variant="h5" mb={2}>
-        Criar Reserva
+    <Box p={3} maxWidth={600} mx="auto">
+      <Typography variant="h5" mb={3} textAlign="center">
+        Criar Nova Reserva
       </Typography>
 
-      {/* BARBEIRO */}
-      <TextField
-        label="Selecione o barbeiro"
-        select
-        fullWidth
-        margin="normal"
-        value={barberId}
-        onChange={(e) => setBarberId(e.target.value)}
-      >
-        {barbers.map((b: any) => (
-          <MenuItem key={b.id} value={b.id}>
-            {b.nome}
-          </MenuItem>
-        ))}
-      </TextField>
+      {loading && (
+        <Box display="flex" justifyContent="center" mb={2}>
+          <CircularProgress />
+        </Box>
+      )}
 
-      {/* SERVIÇO */}
-      <TextField
-        label="Serviço"
-        select
-        fullWidth
-        margin="normal"
-        value={serviceId}
-        onChange={(e) => setServiceId(e.target.value)}
-      >
-        {services.map((s: any) => (
-          <MenuItem key={s.id} value={s.id}>
-            {s.nome} - R${s.preço} - {s.descrição}
-          </MenuItem>
-        ))}
-      </TextField>
+      {error && (
+        <ErrorAlert message={error} onClose={() => setError(null)} />
+      )}
 
-      {/* HORÁRIOS */}
-      <TextField
-        label="Horário"
-        select
-        fullWidth
-        margin="normal"
-        value={timeId}
-        onChange={(e) => setTimeId(e.target.value)}
-        disabled={!barberId}
-      >
-        {times.map((t: any) => (
-          <MenuItem key={t.id} value={t.id}>
-            {new Date(t.data).toLocaleString("pt-BR")}
-          </MenuItem>
-        ))}
-      </TextField>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {/* BARBEIRO */}
+        <Controller
+          name="barberId"
+          control={control}
+          render={({ field }) => (
+            <SelectBarber
+              barbers={barbers}
+              value={field.value}
+              onChange={field.onChange}
+              loading={loading}
+              error={errors.barberId?.message}
+            />
+          )}
+        />
 
-      <Button 
-        variant="contained" 
-        fullWidth 
-        sx={{ mt: 3 }}
-        disabled={!barberId || !serviceId || !timeId}
-        onClick={handleCreate}
+        {/* SERVIÇO */}
+        <Controller
+          name="serviceId"
+          control={control}
+          render={({ field }) => (
+            <SelectService
+              services={services}
+              value={field.value}
+              onChange={field.onChange}
+              loading={loading}
+              error={errors.serviceId?.message}
+            />
+          )}
+        />
+
+        {/* CALENDÁRIO E HORÁRIOS */}
+        <Controller
+          name="timeId"
+          control={control}
+          render={({ field }) => (
+            <CalendarTimePicker
+              times={times}
+              value={field.value}
+              onChange={field.onChange}
+              loading={loading}
+              error={errors.timeId?.message}
+              selectedBarberId={selectedBarberId}
+            />
+          )}
+        />
+
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          sx={{ mt: 3 }}
+          disabled={isSubmitting || loading}
+        >
+          {isSubmitting ? "Criando..." : "Criar Reserva"}
+        </Button>
+      </form>
+
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={6000}
+        onClose={() => setSuccessMessage(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        Criar Reserva
-      </Button>
+        <Alert severity="success" sx={{ width: "100%" }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
