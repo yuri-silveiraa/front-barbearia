@@ -6,6 +6,7 @@ import {
   getTimesByBarber,
   criarReserva,
 } from "../../../api/reservas/reserva.service";
+import type { Barber, Service, TimeSlot } from "../../../api/reservas/types";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
   Box,
@@ -35,9 +36,9 @@ export default function CriarReservaPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [barbers, setBarbers] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
-  const [times, setTimes] = useState<any[]>([]);
+  const [barbers, setBarbers] = useState<Barber[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [times, setTimes] = useState<TimeSlot[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,8 +79,11 @@ export default function CriarReservaPage() {
       ]);
       setBarbers(barbersRes || []);
       setServices(servicesRes || []);
-    } catch (err: any) {
-      setError("Erro ao carregar dados iniciais: " + (err.message || "Tente novamente"));
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err 
+        ? (err as { message: string }).message 
+        : "Tente novamente";
+      setError("Erro ao carregar dados iniciais: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -91,8 +95,11 @@ export default function CriarReservaPage() {
     try {
       const res = await getTimesByBarber(barberId);
       setTimes(res || []);
-    } catch (err: any) {
-      setError("Erro ao carregar horários: " + (err.message || "Tente novamente"));
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err 
+        ? (err as { message: string }).message 
+        : "Tente novamente";
+      setError("Erro ao carregar horários: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -118,8 +125,11 @@ export default function CriarReservaPage() {
       setSuccessMessage("Reserva criada com sucesso!");
       reset();
       setTimeout(() => navigate("/reservas"), 2000);
-    } catch (err: any) {
-      setError("Erro ao criar reserva: " + (err.response?.data.message || "Verifique os dados"));
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : undefined;
+      setError("Erro ao criar reserva: " + (errorMessage || "Verifique os dados"));
     } finally {
       setLoading(false);
     }

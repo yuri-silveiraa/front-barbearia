@@ -6,9 +6,10 @@ import {
   MenuItem,
   Typography,
 } from "@mui/material";
+import type { Barber } from "../../../api/reservas/types";
 
 interface SelectBarberProps {
-  barbers: any[];
+  barbers: Barber[];
   value: string;
   onChange: (value: string) => void;
   loading: boolean;
@@ -33,7 +34,7 @@ const SelectBarber: FC<SelectBarberProps> = ({
       >
         {barbers.map((b) => (
           <MenuItem key={b.id} value={b.id}>
-            {b.nome}
+            {b.name}
           </MenuItem>
         ))}
       </Select>

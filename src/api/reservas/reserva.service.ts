@@ -1,13 +1,6 @@
 import { api } from "../http";
-
-export interface Reserva {
-  id: string;
-  client: string;
-  barber: string;
-  service: string;
-  time: string;
-  status:  "SCHEDULED" | "COMPLETED" | "CANCELED";
-}
+import type { Reserva } from "../../features/reservas/types";
+import type { Barber, Service, TimeSlot, ReservaPayload } from "./types";
 
 export async function getReservas(): Promise<Reserva[]> {
   const { data } = await api.get("/appointment/client-appointments");
@@ -15,27 +8,22 @@ export async function getReservas(): Promise<Reserva[]> {
   return data;
 }
 
-export async function criarReserva(payload: {
-  clientId: string;
-  barberId: string;
-  serviceId: string;
-  timeId: string;
-}): Promise<Reserva> {
+export async function criarReserva(payload: ReservaPayload): Promise<Reserva> {
   const { data } = await api.post("/appointment/create", payload);
   return data;
 }
 
-export async function getBarbers(): Promise<any[]> {
+export async function getBarbers(): Promise<Barber[]> {
   const { data } = await api.get("/barber");
   return data;
 }
 
-export async function getServices(): Promise<any[]> {
+export async function getServices(): Promise<Service[]> {
   const { data } = await api.get("/service");
   return data;
 }
 
-export async function getTimesByBarber(barberId: string): Promise<any[]> {
+export async function getTimesByBarber(barberId: string): Promise<TimeSlot[]> {
   const { data } = await api.get(`/time/${barberId}`);
   return data;
 }

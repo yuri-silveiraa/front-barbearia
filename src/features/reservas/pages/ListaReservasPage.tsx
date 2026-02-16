@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getReservas, type Reserva } from "../../../api/reservas/reserva.service";
+import { getReservas } from "../../../api/reservas/reserva.service";
+import type { Reserva } from "../types";
 import {
   Box,
   Paper,

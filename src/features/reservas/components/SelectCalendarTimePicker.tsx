@@ -12,11 +12,12 @@ import {
   Popover,
   TextField,
 } from "@mui/material";
-import dayjs from "dayjs"; // Usado apenas para comparações de datas; remova se não precisar
+import dayjs from "dayjs";
+import type { TimeSlot } from "../../../api/reservas/types";
 
 interface CalendarTimePickerProps {
-  times: any[]; // Array de { id, data: string (ex: "2024-01-01 10:00") }
-  value: string; // timeId selecionado
+  times: TimeSlot[];
+  value: string;
   onChange: (value: string) => void;
   loading: boolean;
   error?: string;

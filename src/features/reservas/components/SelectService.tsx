@@ -6,9 +6,10 @@ import {
   MenuItem,
   Typography,
 } from "@mui/material";
+import type { Service } from "../../../api/reservas/types";
 
 interface SelectServiceProps {
-  services: any[];
+  services: Service[];
   value: string;
   onChange: (value: string) => void;
   loading: boolean;
@@ -33,7 +34,7 @@ const SelectService: FC<SelectServiceProps> = ({
       >
         {services.map((s) => (
           <MenuItem key={s.id} value={s.id}>
-            {s.nome} - R${s.preço} - {s.descrição}
+            {s.name} - R${s.price} - {s.description}
           </MenuItem>
         ))}
       </Select>

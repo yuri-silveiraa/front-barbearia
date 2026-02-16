@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginData } from "../types";
+import { loginSchema } from "../../../api/auth/schema";
+import type { LoginData } from "../../../api/auth/schema";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -31,9 +32,11 @@ export function LoginPage() {
       setError("");
       await login(data);
       navigate("/reservas");
-    } catch (err: any) {
-      setError(err.response?.data?.message);
-      if (!err.response) {
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { message?: string } } };
+        setError(axiosError.response?.data?.message || "Erro ao fazer login");
+      } else {
         setError("Erro de conexão. Tente novamente mais tarde.");
       }
     }
