@@ -1,55 +1,34 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { loginService } from "../api/auth/auth.service";
-import { type LoginData } from "../features/auth/types";
+import { loginService, getMe } from "../api/auth/auth.service";
+import type { User, AuthContextData } from "../features/auth/types";
+import type { LoginData } from "../api/auth/schema";
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-};
-
-type AuthContextData = {
-  user: User | null;
-  isAuthenticated: boolean;
-  login: (data: LoginData) => Promise<void>;
-  logout: () => void;
-  loadingAuth: boolean;
-};
-
-const AuthContext = createContext<AuthContextData | null>(null);
+export const AuthContext = createContext<AuthContextData | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   useEffect(() => {
-  try {
-    const storagedUser = localStorage.getItem("user");
-
-    if (storagedUser && storagedUser !== "undefined") {
-      setUser(JSON.parse(storagedUser));
-    }
-  } catch (error) {
-    console.error("Erro ao ler usuário do localStorage:", error);
-    localStorage.removeItem("user");
-  }
-
-  setLoadingAuth(false);
-}, []);
-
+    const fetchUser = async () => {
+      try {
+        const response = await getMe();
+        setUser(response.user);
+      } catch {
+        setUser(null);
+      } finally {
+        setLoadingAuth(false);
+      }
+    };
+    fetchUser();
+  }, []);
 
   async function login(data: LoginData) {
     const result = await loginService(data);
-
-    localStorage.setItem("token", result.token);
-    localStorage.setItem("user", JSON.stringify(result.user));
-
     setUser(result.user);
   }
 
   function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     setUser(null);
   }
 
