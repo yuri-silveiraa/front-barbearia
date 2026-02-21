@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getReservas } from "../../../api/reservas/reserva.service";
 import type { Reserva } from "../types";
 import {
@@ -18,6 +18,7 @@ export function ListaReservasPage() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const hasFetched = useRef(false);
 
   const statusColor = {
     SCHEDULED: "cyan",
@@ -37,6 +38,8 @@ export function ListaReservasPage() {
   }
 
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
     carregar();
   }, []);
 

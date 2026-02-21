@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   getBarbers,
@@ -43,6 +43,7 @@ export default function CriarReservaPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const hasFetched = useRef(false);
 
   const {
     control,
@@ -50,6 +51,7 @@ export default function CriarReservaPage() {
     formState: { errors, isSubmitting },
     watch,
     reset,
+    setValue,
   } = useForm<ReservaForm>({
     resolver: zodResolver(reservaSchema),
     defaultValues: { barberId: "", serviceId: "", timeId: "" },
@@ -58,16 +60,20 @@ export default function CriarReservaPage() {
   const selectedBarberId = watch("barberId");
 
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
     loadInitialData();
   }, []);
 
   useEffect(() => {
+    setValue("timeId", "");
+
     if (selectedBarberId) {
       loadTimes(selectedBarberId);
     } else {
-      setTimes([]); 
+      setTimes([]);
     }
-  }, [selectedBarberId]);
+  }, [selectedBarberId, setValue]);
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -188,6 +194,7 @@ export default function CriarReservaPage() {
           control={control}
           render={({ field }) => (
             <CalendarTimePicker
+              key={selectedBarberId || "no-barber"}
               times={times}
               value={field.value}
               onChange={field.onChange}
