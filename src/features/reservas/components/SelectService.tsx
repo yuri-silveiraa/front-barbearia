@@ -23,6 +23,11 @@ const SelectService: FC<SelectServiceProps> = ({
   loading,
   error,
 }) => {
+  const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+
   return (
     <FormControl fullWidth margin="normal" error={!!error}>
       <InputLabel>Serviço</InputLabel>
@@ -33,8 +38,14 @@ const SelectService: FC<SelectServiceProps> = ({
         disabled={loading || services.length === 0}
       >
         {services.map((s) => (
-          <MenuItem key={s.id} value={s.id}>
-            {s.name} - R${s.price} - {s.description}
+          <MenuItem key={s.id} value={String(s.id)}>
+            {[
+              s.name?.trim() || "Serviço sem nome",
+              Number.isFinite(s.price) ? currencyFormatter.format(s.price) : undefined,
+              s.description?.trim() || undefined,
+            ]
+              .filter(Boolean)
+              .join(" - ")}
           </MenuItem>
         ))}
       </Select>

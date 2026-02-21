@@ -33,8 +33,8 @@ const SelectBarber: FC<SelectBarberProps> = ({
         disabled={loading || barbers.length === 0}
       >
         {barbers.map((b) => (
-          <MenuItem key={b.id} value={b.id}>
-            {b.name}
+          <MenuItem key={b.id} value={String(b.id)}>
+            {b.name?.trim() || "Barbeiro sem nome"}
           </MenuItem>
         ))}
       </Select>
