@@ -18,6 +18,10 @@ export async function loginService(data: LoginData): Promise<LoginResponse> {
 }
 
 export async function getMe(): Promise<{ user: User }> {
-  const response = await api.get<{ user: User }>("/user/me");
-  return response.data;
+  const response = await api.get<User>("/user/me");
+  return { user: response.data };
+}
+
+export async function logoutService(): Promise<void> {
+  await api.post("/user/logout");
 }
