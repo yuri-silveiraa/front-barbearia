@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { loginService, getMe } from "../api/auth/auth.service";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
+import { loginService, getMe, logoutService } from "../api/auth/auth.service";
 import type { User, AuthContextData } from "../features/auth/types";
 import type { LoginData } from "../api/auth/schema";
 
@@ -8,14 +8,22 @@ export const AuthContext = createContext<AuthContextData | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
     const fetchUser = async () => {
       try {
         const response = await getMe();
         setUser(response.user);
+        sessionStorage.setItem("user", JSON.stringify(response.user));
       } catch {
-        setUser(null);
+        const storedUser = sessionStorage.getItem("user");
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
       } finally {
         setLoadingAuth(false);
       }
@@ -26,10 +34,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function login(data: LoginData) {
     const result = await loginService(data);
     setUser(result.user);
+    sessionStorage.setItem("user", JSON.stringify(result.user));
   }
 
-  function logout() {
-    setUser(null);
+  async function logout() {
+    try {
+      await logoutService();
+    } finally {
+      setUser(null);
+      sessionStorage.removeItem("user");
+    }
   }
 
   return (

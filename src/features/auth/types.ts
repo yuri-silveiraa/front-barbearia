@@ -10,7 +10,7 @@ export type AuthContextData = {
   user: User | null;
   isAuthenticated: boolean;
   login: (data: LoginData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loadingAuth: boolean;
 };
 
