@@ -25,6 +25,12 @@ export function MainLayout() {
     setOpen(false);
   }
 
+  function handleLogout() {
+    logout();
+    navigate("/login");
+    setOpen(false);
+  }
+
   return (
     <Box sx={{ display: "flex" }}>
       
@@ -46,7 +52,7 @@ export function MainLayout() {
           <Typography 
             variant="body2"
             sx={{ cursor: "pointer" }}
-            onClick={logout}
+            onClick={handleLogout}
           >
             Sair
           </Typography>
@@ -69,7 +75,7 @@ export function MainLayout() {
               <ListItemText primary="Barbeiros" />
             </ListItemButton>
 
-            <ListItemButton onClick={logout}>
+            <ListItemButton onClick={handleLogout}>
               <ListItemText primary="Sair" />
             </ListItemButton>
           </List>
