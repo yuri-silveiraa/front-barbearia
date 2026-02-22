@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const result = await loginService(data);
     setUser(result.user);
     sessionStorage.setItem("user", JSON.stringify(result.user));
+    return result.user;
   }
 
   async function logout() {
