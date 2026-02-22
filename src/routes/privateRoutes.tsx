@@ -15,3 +15,13 @@ export function PrivateRoute({ children }: { children: ReactNode }) {
 
   return children;
 }
+
+export function IndexRedirect() {
+  const { user } = useAuth();
+  
+  if (user?.type === "BARBER") {
+    return <Navigate to="/agenda" replace />;
+  }
+  
+  return <Navigate to="/reservas" replace />;
+}
