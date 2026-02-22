@@ -1,5 +1,5 @@
 import { api } from "../http";
-import type { LoginData } from "./schema";
+import type { LoginData, RegisterData } from "./schema";
 import type { LoginResponse } from "./types";
 import type { User } from "../../features/auth/types";
 
@@ -11,6 +11,26 @@ export async function loginService(data: LoginData): Promise<LoginResponse> {
     if (error && typeof error === 'object' && 'response' in error) {
       const axiosError = error as { response?: { data?: { message?: string } } };
       const message = axiosError.response?.data?.message || "Credenciais inválidas";
+      throw new Error(message);
+    }
+    throw new Error("Erro de conexão. Tente novamente.");
+  }
+}
+
+export async function registerService(data: RegisterData): Promise<LoginResponse> {
+  try {
+    const response = await api.post<LoginResponse>("/user/create", {
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      type: "CLIENT",
+      telephone: data.telephone,
+    });
+    return response.data;
+  } catch (error) {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      const message = axiosError.response?.data?.message || "Erro ao criar conta";
       throw new Error(message);
     }
     throw new Error("Erro de conexão. Tente novamente.");
