@@ -18,10 +18,7 @@ export interface Service {
 
 export interface TimeSlot {
   id: string;
-  time: string;
   data: string;
-  available: boolean;
-  barberId: string;
 }
 
 export interface ReservaPayload {

@@ -4,7 +4,7 @@ import type { Barber, Service, TimeSlot, ReservaPayload } from "./types";
 
 type UnknownRecord = Record<string, unknown>;
 
-const LIST_WRAPPER_KEYS = ["data", "items", "results", "content"] as const;
+const LIST_WRAPPER_KEYS = ["items", "results", "content"] as const;
 
 function isObject(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null;
@@ -158,16 +158,11 @@ function normalizeTimeSlot(raw: UnknownRecord): TimeSlot {
     "startAt",
     "start_at",
     "start",
-    "time",
   ]);
-  const timeOnly = readString(raw, ["time", "hour", "hora"], dateTime);
 
   return {
     id: readString(raw, ["id", "_id", "uuid", "timeId"]),
-    time: timeOnly,
-    data: dateTime || timeOnly,
-    available: readBoolean(raw, ["available", "isAvailable", "disponivel", "status"], true),
-    barberId: readString(raw, ["barberId", "barber_id", "barbeiroId", "barber.id"]),
+    data: dateTime,
   };
 }
 
