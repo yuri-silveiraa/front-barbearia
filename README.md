@@ -1,73 +1,104 @@
-# React + TypeScript + Vite
+# Barbearia Douglas - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend React + TypeScript para sistema de agendamento de barbearia.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19 + TypeScript
+- Vite
+- Material-UI v7
+- React Router DOM v7
+- React Hook Form + Zod
+- Zustand (state management)
+- Axios
 
-## React Compiler
+## Variáveis de Ambiente
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Criar arquivo `.env`:
+```env
+VITE_BASE_URL_API=/api
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev      # Desenvolvimento
+npm run build    # Build produção
+npm run lint     # Verificar código
+npm run preview  # Preview produção
 ```
+
+## Desenvolvimento Local
+
+1. Instalar dependências:
+```bash
+npm install
+```
+
+2. Rodar em desenvolvimento:
+```bash
+npm run dev
+```
+
+3. Acessar: http://localhost:5173
+
+---
+
+## Docker
+
+### Desenvolvimento
+```bash
+docker-compose up
+```
+- Frontend: http://localhost:5173
+- Backend: http://localhost:3000
+- Database: localhost:5432
+
+### Produção
+```bash
+docker-compose -f docker-compose.prod.yml up --build
+```
+- Frontend: http://localhost
+
+Ver [DOCKER.md](DOCKER.md) para instruções detalhadas.
+
+---
+
+## Estrutura do Projeto
+
+```
+src/
+├── api/            # Serviços de API
+├── components/     # Componentes compartilhados
+├── contexts/       # React Contexts
+├── features/       # Funcionalidades por domínio
+│   ├── auth/      # Autenticação
+│   ├── barbeiro/  # Páginas do barbeiro
+│   ├── perfil/    # Perfil do usuário
+│   └── reservas/  # Reservas do cliente
+├── hooks/         # Custom hooks
+└── layouts/       # Layouts
+```
+
+---
+
+## Funcionalidades
+
+### Cliente
+- Login e cadastro
+- Visualizar reservas
+- Criar nova reserva (selecionar barbeiro, serviço, data/horário)
+- Editar perfil
+
+### Barbeiro
+- Agenda do dia
+- Detalhes do agendamento
+- Concluir agendamento
+- Cancelar agendamento
+- Gerenciar horários (em breve)
+
+---
+
+## Licença
+
+MIT
