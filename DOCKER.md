@@ -1,6 +1,6 @@
 # Docker - Barbearia Frontend
 
-## Arquivos Criados
+## Arquivos
 
 | Arquivo | Descrição |
 |---------|-----------|
@@ -17,12 +17,12 @@
 
 ### Pré-requisitos
 - Docker instalado
-- Docker Compose instalado
+- Backend rodando em `http://localhost:3000`
 
 ### Como rodar
 
 ```bash
-# Subir todos os serviços (frontend + backend + database)
+# Subir o frontend
 docker-compose up
 
 # Ou em modo detached
@@ -37,17 +37,20 @@ docker-compose down
 
 ### URLs
 - Frontend: http://localhost:5173
-- Backend: http://localhost:3000
-- Database: localhost:5432
+- Backend: http://localhost:3000 (já deve estar rodando)
 
 ---
 
 ## Produção
 
+### Pré-requisitos
+- Backend rodando em container ou servidor
+- Nome do serviço/container do backend deve ser `backend` (ou alterar no nginx.conf)
+
 ### Como rodar
 
 ```bash
-# Build e subir serviços
+# Build e subir o frontend
 docker-compose -f docker-compose.prod.yml up --build
 
 # Ou em modo detached
@@ -59,17 +62,28 @@ docker-compose -f docker-compose.prod.yml down
 
 ### URLs
 - Frontend: http://localhost
-- Backend: http://localhost:3000
+- Backend: http://localhost:3000 (ou conforme configurado)
 
 ---
 
-## Variáveis de Ambiente
+## Configuração do Backend
 
 ### Desenvolvimento
-O frontend usa proxy para o backend. No `docker-compose.yml`, o serviço `backend` deve estar configurado para aceitar conexões de dentro da rede Docker.
+No desenvolvimento, o frontend faz proxy para `http://host.docker.internal:3000`.
+
+Se o seu backend está rodando na máquina host (não em container), adicione no seu `/etc/hosts`:
+```
+127.0.0.1 host.docker.internal
+```
 
 ### Produção
-O Nginx redireciona `/api/` para o serviço `backend`.
+O Nginx redireciona `/api/` para `http://backend:3000`.
+
+Se o backend está em outro container Docker, certifique-se de que:
+- Estejam na mesma rede Docker
+- O nome do serviço/container seja `backend`
+
+Para alterar a URL do backend, edite o arquivo `nginx.conf` e rebuild a imagem.
 
 ---
 
@@ -84,3 +98,9 @@ docker build -f Dockerfile.prod -t barbearia-front:prod .
 ```bash
 docker run -p 80:80 barbearia-front:prod
 ```
+
+## Variáveis de Ambiente
+
+### Desenvolvimento
+- `VITE_BASE_URL_API=/api` - Prefixo da API
+- `VITE_PROXY_TARGET=http://host.docker.internal:3000` - Target do proxy

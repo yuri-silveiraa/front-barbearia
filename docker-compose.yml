@@ -9,44 +9,13 @@ services:
       - "5173:5173"
     environment:
       - VITE_BASE_URL_API=/api
-      - VITE_PROXY_TARGET=http://backend:3000
+      - VITE_PROXY_TARGET=http://host.docker.internal:3000
     volumes:
       - .:/app
       - /app/node_modules
-    depends_on:
-      - backend
-    networks:
-      - app-network
-
-  backend:
-    image: node:20-alpine
-    working_dir: /app
-    volumes:
-      - ../douglas-barbearia:/app
-    ports:
-      - "3000:3000"
-    command: sh -c "npm install && npm run dev"
-    networks:
-      - app-network
-    depends_on:
-      - database
-
-  database:
-    image: postgres:16-alpine
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=barbearia
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
 
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  postgres_data:
