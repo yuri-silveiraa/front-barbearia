@@ -5,6 +5,7 @@ import type { LoginData } from "../../../api/auth/schema";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
+import { googleAuthService } from "../../../api/auth/googleAuth";
 import {
   Box,
   Button,
@@ -17,7 +18,7 @@ import {
   InputAdornment,
   CircularProgress
 } from "@mui/material";
-import GoogleIcon from "@mui/icons-material/Google";
+import { GoogleLogin } from "@react-oauth/google";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
@@ -57,8 +58,29 @@ export function LoginPage() {
     }
   }
 
-  const handleGoogleLogin = () => {
-    console.warn("Login com Google ainda não implementado");
+  const handleGoogleSuccess = async (credentialResponse: { credential?: string }) => {
+    try {
+      setError("");
+      if (!credentialResponse.credential) {
+        throw new Error("Token Google não disponível");
+      }
+      const result = await googleAuthService(credentialResponse.credential);
+      if (result.user.type === "BARBER") {
+        navigate("/agenda");
+      } else {
+        navigate("/reservas");
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Erro de conexão. Tente novamente mais tarde.");
+      }
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Falha ao fazer login com Google. Tente novamente.");
   };
 
   return (
@@ -108,23 +130,13 @@ export function LoginPage() {
             </Typography>
           </Box>
 
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<GoogleIcon />}
-            onClick={handleGoogleLogin}
-            sx={{
-              mb: 3,
-              py: 1.5,
-              borderColor: "divider",
-                "&:hover": {
-                borderColor: "primary.main",
-                backgroundColor: "action.hover"
-              }
-            }}
-          >
-            Continuar com Google
-          </Button>
+          <Box sx={{ mb: 3 }}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              useOneTap
+            />
+          </Box>
 
           <Divider sx={{ my: 3 }}>
             <Typography variant="caption" color="text.secondary">
