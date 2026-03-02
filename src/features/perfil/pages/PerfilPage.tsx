@@ -63,7 +63,7 @@ export function PerfilPage() {
                   bgcolor: "primary.dark"
                 }
               }}
-              onClick={() => alert("Funcionalidade em desenvolvimento!")}
+              onClick={() => console.warn("Funcionalidade em desenvolvimento")}
             >
               <EditIcon sx={{ fontSize: { xs: 16, sm: 20 }, color: "white" }} />
             </Box>
@@ -103,7 +103,7 @@ export function PerfilPage() {
               </Box>
               <Button
                 size="small"
-                onClick={() => alert("Funcionalidade em desenvolvimento!")}
+                onClick={() => console.warn("Funcionalidade em desenvolvimento")}
                 sx={{ flexShrink: 0 }}
               >
                 Editar
@@ -137,7 +137,7 @@ export function PerfilPage() {
               </Box>
               <Button
                 size="small"
-                onClick={() => alert("Funcionalidade em desenvolvimento!")}
+                onClick={() => console.warn("Funcionalidade em desenvolvimento")}
                 sx={{ flexShrink: 0 }}
               >
                 Editar
@@ -171,7 +171,7 @@ export function PerfilPage() {
               </Box>
               <Button
                 size="small"
-                onClick={() => alert("Funcionalidade em desenvolvimento!")}
+                onClick={() => console.warn("Funcionalidade em desenvolvimento")}
                 sx={{ flexShrink: 0 }}
               >
                 Editar
@@ -187,7 +187,7 @@ export function PerfilPage() {
             variant="outlined"
             color="error"
             size="small"
-            onClick={() => alert("Funcionalidade em desenvolvimento!")}
+            onClick={() => console.warn("Funcionalidade em desenvolvimento")}
           >
             Excluir Conta
           </Button>

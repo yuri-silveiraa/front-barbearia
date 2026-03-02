@@ -56,7 +56,7 @@ export function CadastroPage() {
   }
 
   const handleGoogleLogin = () => {
-    alert("Cadastro com Google em breve!");
+    console.warn("Cadastro com Google ainda não implementado");
   };
 
   return (

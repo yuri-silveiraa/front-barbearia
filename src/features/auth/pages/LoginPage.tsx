@@ -58,8 +58,7 @@ export function LoginPage() {
   }
 
   const handleGoogleLogin = () => {
-    // Implementar login com Google futuramente
-    alert("Login com Google em breve!");
+    console.warn("Login com Google ainda não implementado");
   };
 
   return (

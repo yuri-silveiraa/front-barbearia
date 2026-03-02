@@ -23,7 +23,6 @@ export async function registerService(data: RegisterData): Promise<LoginResponse
       name: data.name,
       email: data.email,
       password: data.password,
-      type: "CLIENT",
       telephone: data.telephone,
     });
     return response.data;
