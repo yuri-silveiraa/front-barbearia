@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { loginService, getMe, logoutService } from "../api/auth/auth.service";
+import { fetchCsrfToken, clearCsrfToken } from "../api/http";
 import type { User, AuthContextData } from "../features/auth/types";
 import type { LoginData } from "../api/auth/schema";
 
@@ -18,12 +19,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const response = await getMe();
         setUser(response.user);
-        sessionStorage.setItem("user", JSON.stringify(response.user));
       } catch {
-        const storedUser = sessionStorage.getItem("user");
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        }
+        setUser(null);
       } finally {
         setLoadingAuth(false);
       }
@@ -34,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function login(data: LoginData) {
     const result = await loginService(data);
     setUser(result.user);
-    sessionStorage.setItem("user", JSON.stringify(result.user));
+    await fetchCsrfToken();
     return result.user;
   }
 
@@ -42,8 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await logoutService();
     } finally {
+      clearCsrfToken();
       setUser(null);
-      sessionStorage.removeItem("user");
     }
   }
 
