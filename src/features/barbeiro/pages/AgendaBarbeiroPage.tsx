@@ -16,8 +16,8 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { getBarberTodayAppointments } from "../barbeiro.service";
-import type { BarberAppointment } from "../types";
+import { getBarberTodayAppointments } from "../../../api/barbeiro/barbeiro.service";
+import type { BarberAppointment } from "../../../api/barbeiro/types";
 
 const statusColors: Record<string, "default" | "success" | "error"> = {
   SCHEDULED: "default",

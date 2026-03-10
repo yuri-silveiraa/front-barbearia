@@ -42,6 +42,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const currentPath = window.location.pathname;
+
     if (error.response?.status === 403 && error.response?.data?.message === "Invalid CSRF token") {
       csrfToken = null;
       const newToken = await fetchCsrfToken();
@@ -54,7 +56,9 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401) {
       clearCsrfToken();
-      window.location.href = "/login";
+      if (currentPath !== "/login" && currentPath !== "/cadastro") {
+        window.location.href = "/login";
+      }
     }
 
     return Promise.reject(error);

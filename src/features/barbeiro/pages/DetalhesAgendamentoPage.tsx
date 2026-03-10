@@ -21,7 +21,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import PersonIcon from "@mui/icons-material/Person";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import { getBarberTodayAppointments, attendAppointment, cancelAppointment } from "../barbeiro.service";
+import { getBarberTodayAppointments, attendAppointment, cancelAppointment } from "../../../api/barbeiro/barbeiro.service";
 import type { BarberAppointment } from "../types";
 
 export default function DetalhesAgendamentoPage() {

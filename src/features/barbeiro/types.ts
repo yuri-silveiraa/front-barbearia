@@ -9,3 +9,9 @@ export interface BarberAppointment {
   time: string;
   status: "SCHEDULED" | "COMPLETED" | "CANCELED";
 }
+
+export interface TimeSlot {
+  id: string;
+  date: string;
+  disponible: boolean;
+}
