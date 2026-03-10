@@ -187,6 +187,6 @@ export async function getServices(): Promise<Service[]> {
 }
 
 export async function getTimesByBarber(barberId: string): Promise<TimeSlot[]> {
-  const { data } = await api.get(`/time/${barberId}`);
+  const { data } = await api.get(`/time/?barberId=${barberId}`);
   return toRecordArray(data).map(normalizeTimeSlot);
 }
