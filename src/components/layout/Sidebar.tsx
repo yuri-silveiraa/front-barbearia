@@ -11,12 +11,14 @@ import {
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import ContentCutIcon from "@mui/icons-material/ContentCut";
 import { useNavigate, useLocation } from "react-router-dom";
+import type { User } from "../../features/auth/types";
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
-  userType?: "BARBER" | "CLIENT";
+  user?: User | null;
 }
 
 const clientMenuItems = [
@@ -50,11 +52,37 @@ const barberMenuItems = [
   }
 ];
 
-export function Sidebar({ open, onClose, userType }: SidebarProps) {
+const adminMenuItems = [
+  {
+    label: "Agenda do Dia",
+    icon: <CalendarMonthIcon />,
+    path: "/agenda"
+  },
+  {
+    label: "Minha Conta",
+    icon: <PersonIcon />,
+    path: "/perfil"
+  },
+  {
+    label: "Horários",
+    icon: <ScheduleIcon />,
+    path: "/horarios"
+  },
+  {
+    label: "Serviços",
+    icon: <ContentCutIcon />,
+    path: "/servicos"
+  }
+];
+
+export function Sidebar({ open, onClose, user }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const menuItems = userType === "BARBER" ? barberMenuItems : clientMenuItems;
+  const userType = user?.type;
+  const isAdmin = user?.type === "BARBER" && user?.isAdmin === true;
+
+  const menuItems = isAdmin ? adminMenuItems : userType === "BARBER" ? barberMenuItems : clientMenuItems;
 
   const handleNavigate = (path: string) => {
     navigate(path);

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef } from "react";
-import { loginService, getMe, logoutService } from "../api/auth/auth.service";
+import { loginService, getMe, logoutService, updateMe, deleteMe, verifyEmail } from "../api/auth/auth.service";
 import { fetchCsrfToken, clearCsrfToken } from "../api/http";
-import type { User, AuthContextData } from "../features/auth/types";
+import type { User, AuthContextData, UpdateProfileData } from "../features/auth/types";
 import type { LoginData } from "../api/auth/schema";
 
 export const AuthContext = createContext<AuthContextData | null>(null);
@@ -35,6 +35,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return result.user;
   }
 
+  async function verifyEmailAndLogin(code: string) {
+    const result = await verifyEmail(code);
+    setUser(result.user);
+    await fetchCsrfToken();
+    return result.user;
+  }
+
   async function logout() {
     try {
       await logoutService();
@@ -44,11 +51,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function updateUser(data: UpdateProfileData) {
+    const result = await updateMe(data);
+    setUser(result.user);
+    return result.user;
+  }
+
+  async function deleteUser() {
+    await deleteMe();
+    clearCsrfToken();
+    setUser(null);
+  }
+
   return (
     <AuthContext.Provider value={{
       user,
       isAuthenticated: !!user,
       login,
+      verifyEmailAndLogin,
+      updateUser,
+      deleteUser,
       logout,
       loadingAuth
     }}>

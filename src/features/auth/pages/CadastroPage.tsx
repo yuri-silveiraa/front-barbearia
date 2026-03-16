@@ -1,10 +1,7 @@
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { registerSchema, type RegisterData } from "../../../api/auth/schema";
-import { registerService } from "../../../api/auth/auth.service";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
@@ -12,38 +9,66 @@ import {
   CardContent,
   TextField,
   Typography,
-  Divider,
   IconButton,
   InputAdornment,
   CircularProgress
 } from "@mui/material";
-import GoogleIcon from "@mui/icons-material/Google";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { registerSchema } from "../../../api/auth/schema";
+import { registerService } from "../../../api/auth/auth.service";
+import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import type { RegisterData } from "../../../api/auth/schema";
 
 export function CadastroPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const STORAGE_KEY = "cadastro_form_data";
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting },
+    reset,
+    watch
   } = useForm<RegisterData>({
     resolver: zodResolver(registerSchema)
   });
+
+  useEffect(() => {
+    const emailFromState = (location.state as { email?: string } | null)?.email;
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as Partial<RegisterData>;
+        reset((current) => ({ ...current, ...parsed }));
+      } catch {
+        // ignore corrupted storage
+      }
+    }
+    if (emailFromState) {
+      reset((current) => ({ ...current, email: emailFromState }));
+    }
+  }, [location.state, reset, STORAGE_KEY]);
+
+  useEffect(() => {
+    const subscription = watch((value) => {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, STORAGE_KEY]);
 
   async function onSubmit(data: RegisterData) {
     try {
       setError("");
       await registerService(data);
-      await login({ email: data.email, password: data.password });
-      navigate("/reservas");
+      sessionStorage.removeItem(STORAGE_KEY);
+      navigate("/verificar-email", { state: { email: data.email } });
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'message' in err) {
         setError((err as { message: string }).message);
@@ -54,10 +79,6 @@ export function CadastroPage() {
       }
     }
   }
-
-  const handleGoogleLogin = () => {
-    console.warn("Cadastro com Google ainda não implementado");
-  };
 
   return (
     <Box
@@ -70,6 +91,7 @@ export function CadastroPage() {
         p: 2
       }}
     >
+      <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />
       <Card
         sx={{
           width: "100%",
@@ -113,30 +135,6 @@ export function CadastroPage() {
               Cadastre-se para fazer suas reservas
             </Typography>
           </Box>
-
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<GoogleIcon />}
-            onClick={handleGoogleLogin}
-            sx={{
-              mb: 3,
-              py: 1.5,
-              borderColor: "divider",
-              "&:hover": {
-                borderColor: "primary.main",
-                backgroundColor: "action.hover"
-              }
-            }}
-          >
-            Continuar com Google
-          </Button>
-
-          <Divider sx={{ my: 3 }}>
-            <Typography variant="caption" color="text.secondary">
-              ou cadastre-se com email
-            </Typography>
-          </Divider>
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <TextField
@@ -215,26 +213,6 @@ export function CadastroPage() {
               helperText={errors.telephone?.message || "Ex: 11999999999"}
               autoComplete="tel"
             />
-
-            {error && (
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: "rgba(244, 67, 54, 0.15)",
-                  border: "1px solid",
-                  borderColor: "error.main"
-                }}
-              >
-                <Typography 
-                  color="error" 
-                  sx={{ fontSize: "0.875rem", fontWeight: 500 }}
-                >
-                  {error}
-                </Typography>
-              </Box>
-            )}
 
             <Button
               type="submit"

@@ -5,7 +5,6 @@ import {
   Typography,
   Paper,
   CircularProgress,
-  Alert,
   Card,
   CardContent,
   Chip,
@@ -17,6 +16,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { getBarberTodayAppointments } from "../../../api/barbeiro/barbeiro.service";
+import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import type { BarberAppointment } from "../../../api/barbeiro/types";
 
 const statusColors: Record<string, "default" | "success" | "error"> = {
@@ -68,6 +68,7 @@ export default function AgendaBarbeiroPage() {
 
   return (
     <Box sx={{ maxWidth: 600, mx: "auto", px: { xs: 2, sm: 3 }, py: 2 }}>
+      <FeedbackBanner message={error} severity="error" onClose={() => setError(null)} />
       <Typography variant="h5" sx={{ mb: 0.5, fontWeight: 700, textAlign: "center" }}>
         Agenda do Dia
       </Typography>
@@ -79,12 +80,6 @@ export default function AgendaBarbeiroPage() {
         <Box display="flex" justifyContent="center" py={4}>
           <CircularProgress />
         </Box>
-      )}
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
       )}
 
       {!loading && appointments.length === 0 && (

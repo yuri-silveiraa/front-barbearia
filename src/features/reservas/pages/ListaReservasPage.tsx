@@ -1,6 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import { getReservas } from "../../../api/reservas/reserva.service";
-import type { Reserva } from "../types";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Paper,
@@ -8,17 +7,28 @@ import {
   CircularProgress,
   Button,
   Chip,
-  Avatar
+  Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import { cancelarReserva, getReservas } from "../../../api/reservas/reserva.service";
+import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import type { Reserva } from "../types";
 
 export function ListaReservasPage() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [reservaToCancel, setReservaToCancel] = useState<Reserva | null>(null);
+  const [canceling, setCanceling] = useState(false);
   const navigate = useNavigate();
   const hasFetched = useRef(false);
 
@@ -35,12 +45,39 @@ export function ListaReservasPage() {
     try {
       const response = await getReservas();
       setReservas(response);
+      setError(null);
     } catch (err) {
-      console.error(err);
+      const message = err instanceof Error ? err.message : "Erro ao carregar reservas";
+      setError(message);
     } finally {
       setLoading(false);
     }
   }
+
+  const handleOpenCancel = (reserva: Reserva) => {
+    setReservaToCancel(reserva);
+    setCancelDialogOpen(true);
+  };
+
+  const handleCancel = async () => {
+    if (!reservaToCancel) return;
+
+    setCanceling(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await cancelarReserva(reservaToCancel.id);
+      setSuccess("Reserva cancelada com sucesso.");
+      await carregar();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao cancelar reserva";
+      setError(message);
+    } finally {
+      setCanceling(false);
+      setCancelDialogOpen(false);
+      setReservaToCancel(null);
+    }
+  };
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -58,6 +95,8 @@ export function ListaReservasPage() {
 
   return (
     <Box sx={{ px: { xs: 1, sm: 2 } }}>
+      <FeedbackBanner message={error} severity="error" onClose={() => setError(null)} />
+      <FeedbackBanner message={success} severity="success" onClose={() => setSuccess(null)} />
       <Box sx={{ 
         display: "flex", 
         flexDirection: { xs: "column", sm: "row" },
@@ -195,11 +234,42 @@ export function ListaReservasPage() {
                     sx={{ fontWeight: 600, alignSelf: { xs: "flex-start", sm: "center" } }}
                   />
                 </Box>
+
+                {reserva.status === "SCHEDULED" && (
+                  <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+                    <Button
+                      size="small"
+                      color="error"
+                      variant="outlined"
+                      onClick={() => handleOpenCancel(reserva)}
+                    >
+                      Cancelar reserva
+                    </Button>
+                  </Box>
+                )}
               </Paper>
             );
           })}
         </Box>
       )}
+
+      <Dialog open={cancelDialogOpen} onClose={() => !canceling && setCancelDialogOpen(false)}>
+        <DialogTitle>Cancelar reserva</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Tem certeza que deseja cancelar a reserva de{" "}
+            <strong>{reservaToCancel?.service}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCancelDialogOpen(false)} disabled={canceling}>
+            Voltar
+          </Button>
+          <Button onClick={handleCancel} color="error" disabled={canceling}>
+            {canceling ? "Cancelando..." : "Confirmar cancelamento"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

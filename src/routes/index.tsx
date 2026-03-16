@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "./../features/auth/pages/LoginPage";
 import { CadastroPage } from "./../features/auth/pages/CadastroPage";
+import VerificarEmailPage from "../features/auth/pages/VerificarEmailPage";
 import { ListaReservasPage } from "./../features/reservas/pages/ListaReservasPage";
 import { PrivateRoute, IndexRedirect } from "./privateRoutes";
 import { MainLayout } from "./../layouts/MainLayout";
@@ -9,6 +10,7 @@ import { PerfilPage } from "../features/perfil/pages/PerfilPage";
 import AgendaBarbeiroPage from "../features/barbeiro/pages/AgendaBarbeiroPage";
 import DetalhesAgendamentoPage from "../features/barbeiro/pages/DetalhesAgendamentoPage";
 import HorariosPage from "../features/barbeiro/pages/HorariosPage";
+import ServicosPage from "../features/servicos/pages/ServicosPage";
 
 export default function AppRoutes() {
   return (
@@ -16,6 +18,7 @@ export default function AppRoutes() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cadastro" element={<CadastroPage />} />
+        <Route path="/verificar-email" element={<VerificarEmailPage />} />
 
         <Route
           path="/"
@@ -32,6 +35,7 @@ export default function AppRoutes() {
           <Route path="agenda" element={<AgendaBarbeiroPage />} />
           <Route path="agenda/:id" element={<DetalhesAgendamentoPage />} />
           <Route path="horarios" element={<HorariosPage />} />
+          <Route path="servicos" element={<ServicosPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/reservas" replace />} />

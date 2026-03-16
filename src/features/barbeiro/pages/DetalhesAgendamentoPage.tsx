@@ -5,7 +5,6 @@ import {
   Typography,
   Paper,
   CircularProgress,
-  Alert,
   Button,
   Dialog,
   DialogTitle,
@@ -22,6 +21,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { getBarberTodayAppointments, attendAppointment, cancelAppointment } from "../../../api/barbeiro/barbeiro.service";
+import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import type { BarberAppointment } from "../types";
 
 export default function DetalhesAgendamentoPage() {
@@ -118,16 +118,20 @@ export default function DetalhesAgendamentoPage() {
   if (error || !appointment) {
     return (
       <Box sx={{ maxWidth: 600, mx: "auto", px: 2, py: 2 }}>
+        <FeedbackBanner message={error || "Agendamento não encontrado"} severity="error" onClose={() => setError(null)} />
         <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/agenda")} sx={{ mb: 2 }}>
           Voltar
         </Button>
-        <Alert severity="error">{error || "Agendamento não encontrado"}</Alert>
+        <Typography color="text.secondary">
+          {error || "Agendamento não encontrado"}
+        </Typography>
       </Box>
     );
   }
 
   return (
     <Box sx={{ maxWidth: 600, mx: "auto", px: 2, py: 2 }}>
+      <FeedbackBanner message={error} severity="error" onClose={() => setError(null)} />
       <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/agenda")} sx={{ mb: 2 }}>
         Voltar
       </Button>

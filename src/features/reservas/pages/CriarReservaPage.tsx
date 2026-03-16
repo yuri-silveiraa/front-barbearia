@@ -1,37 +1,35 @@
 import { useEffect, useState, useRef } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useNavigate } from "react-router-dom";
-import {
-  getBarbers,
-  getServices,
-  getTimesByBarber,
-  criarReserva,
-} from "../../../api/reservas/reserva.service";
-import type { Barber, Service, TimeSlot } from "../../../api/reservas/types";
-import { useAuth } from "../../../contexts/AuthContext";
 import {
   Box,
   Button,
   CircularProgress,
-  Snackbar,
   Typography,
-  Alert,
   Paper,
   MobileStepper,
   useTheme
 } from "@mui/material";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import SelectBarber from "../components/SelectBarber";
-import SelectService from "../components/SelectService";
-import CalendarTimePicker from "../components/SelectCalendarTimePicker";
-import ErrorAlert from "../../../components/ErrorAlert";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import KeyboardArrowLeft from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
+import {
+  getBarbers,
+  getServices,
+  getTimesByBarber,
+  criarReserva,
+} from "../../../api/reservas/reserva.service";
+import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import { useAuth } from "../../../contexts/AuthContext";
+import CalendarTimePicker from "../components/SelectCalendarTimePicker";
+import SelectBarber from "../components/SelectBarber";
+import SelectService from "../components/SelectService";
+import type { Barber, Service, TimeSlot } from "../../../api/reservas/types";
 
 const reservaSchema = z.object({
   barberId: z.string().min(1, "Selecione um barbeiro"),
@@ -141,6 +139,9 @@ export default function CriarReservaPage() {
     try {
       const res = await getTimesByBarber(barberId);
       setTimes(res);
+      if (res.length === 0) {
+        setError("Nenhum horário disponível para este barbeiro no momento.");
+      }
     } catch (err: unknown) {
       const errorMessage = err && typeof err === 'object' && 'message' in err 
         ? (err as { message: string }).message 
@@ -172,10 +173,8 @@ export default function CriarReservaPage() {
       reset();
       setTimeout(() => navigate("/reservas"), 2000);
     } catch (err: unknown) {
-      const errorMessage = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : undefined;
-      setError("Erro ao criar reserva: " + (errorMessage || "Verifique os dados"));
+      const errorMessage = err instanceof Error ? err.message : "Verifique os dados";
+      setError("Erro ao criar reserva: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -244,6 +243,8 @@ export default function CriarReservaPage() {
 
   return (
     <Box sx={{ maxWidth: 600, mx: "auto", px: { xs: 2, sm: 3 }, py: 2 }}>
+      <FeedbackBanner message={error} severity="error" onClose={() => setError(null)} />
+      <FeedbackBanner message={successMessage} severity="success" onClose={() => setSuccessMessage(null)} />
       <Typography variant="h5" sx={{ mb: 0.5, fontWeight: 700, textAlign: "center" }}>
         Nova Reserva
       </Typography>
@@ -303,10 +304,6 @@ export default function CriarReservaPage() {
           <Box display="flex" justifyContent="center" py={2}>
             <CircularProgress size={24} />
           </Box>
-        )}
-
-        {error && (
-          <ErrorAlert message={error} onClose={() => setError(null)} />
         )}
 
         <Box sx={{ minHeight: 100 }}>
@@ -376,17 +373,6 @@ export default function CriarReservaPage() {
           }
         />
       </Paper>
-
-      <Snackbar
-        open={!!successMessage}
-        autoHideDuration={6000}
-        onClose={() => setSuccessMessage(null)}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert severity="success" sx={{ width: "100%" }}>
-          {successMessage}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

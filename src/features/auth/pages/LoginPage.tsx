@@ -1,11 +1,7 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema } from "../../../api/auth/schema";
-import type { LoginData } from "../../../api/auth/schema";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../contexts/AuthContext";
-import { googleAuthService } from "../../../api/auth/googleAuth";
 import {
   Box,
   Button,
@@ -22,6 +18,11 @@ import { GoogleLogin } from "@react-oauth/google";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
+import { loginSchema } from "../../../api/auth/schema";
+import { googleAuthService } from "../../../api/auth/googleAuth";
+import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import { useAuth } from "../../../contexts/AuthContext";
+import type { LoginData } from "../../../api/auth/schema";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ export function LoginPage() {
     try {
       setError("");
       const result = await login(data);
+      sessionStorage.removeItem("cadastro_form_data");
       if (result?.type === "BARBER") {
         navigate("/agenda");
       } else {
@@ -83,6 +85,8 @@ export function LoginPage() {
     setError("Falha ao fazer login com Google. Tente novamente.");
   };
 
+  const showGoogleLogin = false;
+
   return (
     <Box
       sx={{
@@ -94,6 +98,7 @@ export function LoginPage() {
         p: 2
       }}
     >
+      <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />
       <Card
         sx={{
           width: "100%",
@@ -131,18 +136,22 @@ export function LoginPage() {
           </Box>
 
           <Box sx={{ mb: 3 }}>
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap
-            />
+            {showGoogleLogin && (
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap
+              />
+            )}
           </Box>
 
-          <Divider sx={{ my: 3 }}>
-            <Typography variant="caption" color="text.secondary">
-              ou entre com email
-            </Typography>
-          </Divider>
+          {showGoogleLogin && (
+            <Divider sx={{ my: 3 }}>
+              <Typography variant="caption" color="text.secondary">
+                ou entre com email
+              </Typography>
+            </Divider>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <TextField
@@ -178,26 +187,6 @@ export function LoginPage() {
                 )
               }}
             />
-
-            {error && (
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: "rgba(244, 67, 54, 0.15)",
-                  border: "1px solid",
-                  borderColor: "error.main"
-                }}
-              >
-                <Typography 
-                  color="error" 
-                  sx={{ fontSize: "0.875rem", fontWeight: 500 }}
-                >
-                  {error}
-                </Typography>
-              </Box>
-            )}
 
             <Button
               type="submit"

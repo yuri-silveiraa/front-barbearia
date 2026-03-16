@@ -8,14 +8,16 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_BASE_URL_API=/api
-      - VITE_PROXY_TARGET=http://host.docker.internal:3000
+      - VITE_BASE_URL_API=http://localhost:3000
+      - VITE_GOOGLE_CLIENT_ID=53270748866-5m51010tidojg0hfpmgqo54l7dpqegb2.apps.googleusercontent.com
     volumes:
       - .:/app
       - /app/node_modules
     networks:
-      - app-network
+      - douglas-barbearia_default
+    external_links:
+      - api-barbearia-dev
 
 networks:
-  app-network:
-    driver: bridge
+  douglas-barbearia_default:
+    external: true

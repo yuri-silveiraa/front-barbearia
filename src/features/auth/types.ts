@@ -5,6 +5,7 @@ export type User = {
   email: string;
   phone?: string;
   type?: "BARBER" | "CLIENT";
+  isAdmin?: boolean;
 };
 
 // Auth Context type
@@ -12,6 +13,9 @@ export type AuthContextData = {
   user: User | null;
   isAuthenticated: boolean;
   login: (data: LoginData) => Promise<User>;
+  verifyEmailAndLogin: (code: string) => Promise<User>;
+  updateUser: (data: UpdateProfileData) => Promise<User>;
+  deleteUser: () => Promise<void>;
   logout: () => Promise<void>;
   loadingAuth: boolean;
 };
@@ -20,4 +24,10 @@ export type AuthContextData = {
 export type LoginData = {
   email: string;
   password: string;
+};
+
+export type UpdateProfileData = {
+  name?: string;
+  email?: string;
+  telephone?: string;
 };

@@ -19,6 +19,10 @@ export function PrivateRoute({ children }: { children: ReactNode }) {
 export function IndexRedirect() {
   const { user } = useAuth();
   
+  if (user?.type === "BARBER" && user.isAdmin) {
+    return <Navigate to="/servicos" replace />;
+  }
+  
   if (user?.type === "BARBER") {
     return <Navigate to="/agenda" replace />;
   }

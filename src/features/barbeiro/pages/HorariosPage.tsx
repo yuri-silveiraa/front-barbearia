@@ -37,6 +37,7 @@ import {
   getMyTimeSlots,
   deleteTimeSlot,
 } from "../../../api/time/time.service";
+import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import type { GenerateTimeSlotsParams, TimeSlot, ValidationResult } from "../../../api/time/time.service";
 
 const STORAGE_KEY = "barber_time_config";
@@ -334,24 +335,14 @@ export default function HorariosPage() {
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", px: 2, py: 2 }}>
+      <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />
+      <FeedbackBanner message={success} severity="success" onClose={() => setSuccess("")} />
       <Typography variant="h5" sx={{ mb: 0.5, fontWeight: 700, textAlign: "center" }}>
         Gerenciar Horários
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: "center" }}>
         Configure seus horários de trabalho
       </Typography>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
-          {error}
-        </Alert>
-      )}
-
-      {success && (
-        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess("")}>
-          {success}
-        </Alert>
-      )}
 
       <Paper sx={{ p: 3, mb: 2, borderRadius: 3, backgroundColor: "background.paper" }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: "text.primary" }}>

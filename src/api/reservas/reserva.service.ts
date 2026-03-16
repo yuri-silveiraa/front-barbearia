@@ -172,8 +172,21 @@ export async function getReservas(): Promise<Reserva[]> {
 }
 
 export async function criarReserva(payload: ReservaPayload): Promise<Reserva> {
-  const { data } = await api.post("/appointment/create", payload);
-  return data;
+  try {
+    const { data } = await api.post("/appointment/create", payload);
+    return data;
+  } catch (error) {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      const message = axiosError.response?.data?.message || "Erro ao criar reserva";
+      throw new Error(message);
+    }
+    throw new Error("Erro de conexão. Tente novamente.");
+  }
+}
+
+export async function cancelarReserva(reservaId: string): Promise<void> {
+  await api.patch(`/appointment/cancel/${reservaId}`);
 }
 
 export async function getBarbers(): Promise<Barber[]> {

@@ -15,7 +15,7 @@ export function MainLayout() {
       <Sidebar 
         open={sidebarOpen} 
         onClose={() => setSidebarOpen(false)}
-        userType={user?.type}
+        user={user}
       />
 
       <Box
