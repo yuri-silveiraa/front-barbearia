@@ -401,7 +401,7 @@ export default function HorariosPage() {
               <TimeSelect
                 label="Início do intervalo"
                 value={config.intervalStart}
-                onChange={(time) => saveConfig({ ...config, intervalStart: time })}
+                onChange={(time) => saveConfig({ ...config, intervalStart: time, hasInterval: true })}
               />
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
@@ -409,7 +409,13 @@ export default function HorariosPage() {
                 label="Duração (min)"
                 type="number"
                 value={config.intervalDuration}
-                onChange={(e) => saveConfig({ ...config, intervalDuration: Number(e.target.value) })}
+                onChange={(e) =>
+                  saveConfig({
+                    ...config,
+                    intervalDuration: Number(e.target.value),
+                    hasInterval: true,
+                  })
+                }
                 fullWidth
                 size="small"
                 inputProps={{ min: 15, max: 120 }}
