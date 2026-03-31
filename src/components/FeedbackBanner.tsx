@@ -1,5 +1,6 @@
 import { Alert, Box, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { useEffect } from "react";
 
 type FeedbackSeverity = "success" | "error" | "warning" | "info";
 
@@ -8,15 +9,23 @@ interface FeedbackBannerProps {
   severity?: FeedbackSeverity;
   onClose?: () => void;
   maxWidth?: number;
+  autoHideMs?: number;
 }
 
 export function FeedbackBanner({
   message,
   severity = "error",
   onClose,
-  maxWidth = 680
+  maxWidth = 680,
+  autoHideMs = 5000
 }: FeedbackBannerProps) {
   if (!message) return null;
+
+  useEffect(() => {
+    if (!onClose || !autoHideMs || autoHideMs <= 0) return;
+    const timer = setTimeout(() => onClose(), autoHideMs);
+    return () => clearTimeout(timer);
+  }, [message, onClose, autoHideMs]);
 
   return (
     <Box
