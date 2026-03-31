@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
@@ -26,7 +26,7 @@ import type { LoginData } from "../../../api/auth/schema";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user, loadingAuth } = useAuth();
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -38,15 +38,25 @@ export function LoginPage() {
     resolver: zodResolver(loginSchema)
   });
 
+  useEffect(() => {
+    if (loadingAuth || !user) return;
+
+    if (user.type === "BARBER") {
+      navigate(user.isAdmin ? "/servicos" : "/agenda", { replace: true });
+    } else {
+      navigate("/reservas", { replace: true });
+    }
+  }, [loadingAuth, user, navigate]);
+
   async function onSubmit(data: LoginData) {
     try {
       setError("");
       const result = await login(data);
       sessionStorage.removeItem("cadastro_form_data");
       if (result?.type === "BARBER") {
-        navigate("/agenda");
+        navigate("/agenda", { replace: true });
       } else {
-        navigate("/reservas");
+        navigate("/reservas", { replace: true });
       }
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
@@ -68,9 +78,9 @@ export function LoginPage() {
       }
       const result = await googleAuthService(credentialResponse.credential);
       if (result.user.type === "BARBER") {
-        navigate("/agenda");
+        navigate("/agenda", { replace: true });
       } else {
-        navigate("/reservas");
+        navigate("/reservas", { replace: true });
       }
     } catch (err) {
       if (err instanceof Error) {
