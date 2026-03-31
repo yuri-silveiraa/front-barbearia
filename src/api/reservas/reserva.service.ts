@@ -163,6 +163,7 @@ function normalizeTimeSlot(raw: UnknownRecord): TimeSlot {
   return {
     id: readString(raw, ["id", "_id", "uuid", "timeId"]),
     data: dateTime,
+    date: readOptionalString(raw, ["date", "data", "datetime", "dateTime", "startAt", "start_at", "start"]),
   };
 }
 

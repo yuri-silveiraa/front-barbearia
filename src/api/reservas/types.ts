@@ -19,6 +19,7 @@ export interface Service {
 export interface TimeSlot {
   id: string;
   data: string;
+  date?: string;
 }
 
 export interface ReservaPayload {

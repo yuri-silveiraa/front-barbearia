@@ -20,6 +20,8 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import dayjs from "dayjs";
 
 function parseSlotDate(value: string): dayjs.Dayjs | null {
+  if (!value) return null;
+
   const direct = dayjs(value);
   if (direct.isValid()) {
     return direct;
@@ -30,6 +32,10 @@ function parseSlotDate(value: string): dayjs.Dayjs | null {
   const [, day, month, year] = match;
   const parsed = dayjs(`${year}-${month}-${day}`);
   return parsed.isValid() ? parsed : null;
+}
+
+function getSlotDateValue(slot: TimeSlot): string {
+  return slot.date ?? slot.data ?? "";
 }
 import type { TimeSlot } from "../../../api/reservas/types";
 
@@ -54,7 +60,7 @@ const CalendarTimePicker: FC<CalendarTimePickerProps> = ({
   const availableDates = useMemo(() => {
     const dates = new Set<string>();
     times.forEach(slot => {
-      const parsed = parseSlotDate(slot.data);
+      const parsed = parseSlotDate(getSlotDateValue(slot));
       if (parsed) {
         dates.add(parsed.format("YYYY-MM-DD"));
       }
@@ -65,7 +71,7 @@ const CalendarTimePicker: FC<CalendarTimePickerProps> = ({
   const timesForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
     return times.filter(slot => {
-      const parsed = parseSlotDate(slot.data);
+      const parsed = parseSlotDate(getSlotDateValue(slot));
       return parsed ? parsed.format("YYYY-MM-DD") === selectedDate : false;
     });
   }, [times, selectedDate]);
@@ -153,7 +159,7 @@ const CalendarTimePicker: FC<CalendarTimePickerProps> = ({
               disabled={loading || timesForSelectedDate.length === 0}
             >
               {timesForSelectedDate.map((slot) => {
-                const parsed = parseSlotDate(slot.data);
+                const parsed = parseSlotDate(getSlotDateValue(slot));
                 const time = parsed ? parsed.format("HH:mm") : slot.data;
                 return (
                   <MenuItem key={slot.id} value={slot.id}>
