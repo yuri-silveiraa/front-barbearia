@@ -18,6 +18,19 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import dayjs from "dayjs";
+
+function parseSlotDate(value: string): dayjs.Dayjs | null {
+  const direct = dayjs(value);
+  if (direct.isValid()) {
+    return direct;
+  }
+
+  const match = value.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (!match) return null;
+  const [, day, month, year] = match;
+  const parsed = dayjs(`${year}-${month}-${day}`);
+  return parsed.isValid() ? parsed : null;
+}
 import type { TimeSlot } from "../../../api/reservas/types";
 
 interface CalendarTimePickerProps {
@@ -41,10 +54,9 @@ const CalendarTimePicker: FC<CalendarTimePickerProps> = ({
   const availableDates = useMemo(() => {
     const dates = new Set<string>();
     times.forEach(slot => {
-      const match = slot.data.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-      if (match) {
-        const [, day, month, year] = match;
-        dates.add(`${year}-${month}-${day}`);
+      const parsed = parseSlotDate(slot.data);
+      if (parsed) {
+        dates.add(parsed.format("YYYY-MM-DD"));
       }
     });
     return dates;
@@ -53,13 +65,8 @@ const CalendarTimePicker: FC<CalendarTimePickerProps> = ({
   const timesForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
     return times.filter(slot => {
-      const match = slot.data.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-      if (match) {
-        const [, day, month, year] = match;
-        const slotDate = `${year}-${month}-${day}`;
-        return slotDate === selectedDate;
-      }
-      return false;
+      const parsed = parseSlotDate(slot.data);
+      return parsed ? parsed.format("YYYY-MM-DD") === selectedDate : false;
     });
   }, [times, selectedDate]);
 
@@ -146,8 +153,8 @@ const CalendarTimePicker: FC<CalendarTimePickerProps> = ({
               disabled={loading || timesForSelectedDate.length === 0}
             >
               {timesForSelectedDate.map((slot) => {
-                const match = slot.data.match(/(\d{2}):(\d{2})/);
-                const time = match ? `${match[1]}:${match[2]}` : slot.data;
+                const parsed = parseSlotDate(slot.data);
+                const time = parsed ? parsed.format("HH:mm") : slot.data;
                 return (
                   <MenuItem key={slot.id} value={slot.id}>
                     {time}
