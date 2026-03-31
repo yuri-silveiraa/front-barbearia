@@ -19,9 +19,9 @@ jobs:
           script: |
             set -e
             BASE_DIR=${{ secrets.DEPLOY_BASE_DIR }}
-            cd "$BASE_DIR/douglas-barbearia"
+            cd "$BASE_DIR/backend-barbearia-reservas"
             git pull
-            cd "$BASE_DIR/barbearia-front"
+            cd "$BASE_DIR/front-barbearia"
             git pull
-            cd "$BASE_DIR/douglas-barbearia"
+            cd "$BASE_DIR/backend-barbearia-reservas"
             docker compose -f docker-compose.deploy.yml up -d --build --no-deps frontend
