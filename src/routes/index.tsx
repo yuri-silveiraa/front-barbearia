@@ -11,6 +11,7 @@ import AgendaBarbeiroPage from "../features/barbeiro/pages/AgendaBarbeiroPage";
 import DetalhesAgendamentoPage from "../features/barbeiro/pages/DetalhesAgendamentoPage";
 import HorariosPage from "../features/barbeiro/pages/HorariosPage";
 import ServicosPage from "../features/servicos/pages/ServicosPage";
+import AgendaBarbeiroPeriodoPage from "../features/barbeiro/pages/AgendaBarbeiroPeriodoPage";
 
 export default function AppRoutes() {
   return (
@@ -34,6 +35,7 @@ export default function AppRoutes() {
           <Route path="perfil" element={<PerfilPage />} />
           <Route path="agenda" element={<AgendaBarbeiroPage />} />
           <Route path="agenda/:id" element={<DetalhesAgendamentoPage />} />
+          <Route path="agenda/periodo" element={<AgendaBarbeiroPeriodoPage />} />
           <Route path="horarios" element={<HorariosPage />} />
           <Route path="servicos" element={<ServicosPage />} />
         </Route>

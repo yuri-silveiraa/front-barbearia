@@ -20,7 +20,7 @@ export function IndexRedirect() {
   const { user } = useAuth();
   
   if (user?.type === "BARBER" && user.isAdmin) {
-    return <Navigate to="/servicos" replace />;
+    return <Navigate to="/agenda" replace />;
   }
   
   if (user?.type === "BARBER") {

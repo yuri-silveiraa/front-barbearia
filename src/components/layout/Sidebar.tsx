@@ -41,6 +41,11 @@ const barberMenuItems = [
     path: "/agenda"
   },
   {
+    label: "Agenda por Período",
+    icon: <CalendarMonthIcon />,
+    path: "/agenda/periodo"
+  },
+  {
     label: "Minha Conta",
     icon: <PersonIcon />,
     path: "/perfil"
@@ -57,6 +62,11 @@ const adminMenuItems = [
     label: "Agenda do Dia",
     icon: <CalendarMonthIcon />,
     path: "/agenda"
+  },
+  {
+    label: "Agenda por Período",
+    icon: <CalendarMonthIcon />,
+    path: "/agenda/periodo"
   },
   {
     label: "Minha Conta",

@@ -6,6 +6,13 @@ export async function getBarberTodayAppointments(): Promise<BarberAppointment[]>
   return data;
 }
 
+export async function getBarberAppointmentsByRange(start: string, end: string): Promise<BarberAppointment[]> {
+  const { data } = await api.get<BarberAppointment[]>(
+    `/barber/appointments?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
+  );
+  return data;
+}
+
 export async function attendAppointment(appointmentId: string): Promise<void> {
   await api.patch(`/appointment/attend/${appointmentId}`);
 }

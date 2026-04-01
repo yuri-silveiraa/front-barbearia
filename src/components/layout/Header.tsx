@@ -52,7 +52,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           <Typography
             variant={isMobile ? "body1" : "h6"}
             component="div"
-            onClick={() => navigate(user?.type === "BARBER" && user.isAdmin ? "/servicos" : user?.type === "BARBER" ? "/agenda" : "/reservas")}
+            onClick={() => navigate(user?.type === "BARBER" ? "/agenda" : "/reservas")}
             sx={{
               cursor: "pointer",
               fontWeight: 700,
