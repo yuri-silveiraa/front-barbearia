@@ -103,7 +103,7 @@ export default function AgendaBarbeiroPeriodoPage() {
       <Paper sx={{ p: 2.5, mb: 3, borderRadius: 3 }}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={5}>
+            <Grid size={{ xs: 12, sm: 5 }}>
               <DatePicker
                 label="Início"
                 value={startDate}
@@ -111,7 +111,7 @@ export default function AgendaBarbeiroPeriodoPage() {
                 slotProps={{ textField: { fullWidth: true, size: "small" } }}
               />
             </Grid>
-            <Grid item xs={12} sm={5}>
+            <Grid size={{ xs: 12, sm: 5 }}>
               <DatePicker
                 label="Fim"
                 value={endDate}
@@ -119,7 +119,7 @@ export default function AgendaBarbeiroPeriodoPage() {
                 slotProps={{ textField: { fullWidth: true, size: "small" } }}
               />
             </Grid>
-            <Grid item xs={12} sm={2} display="flex" alignItems="center">
+            <Grid size={{ xs: 12, sm: 2 }} display="flex" alignItems="center">
               <Button variant="contained" fullWidth onClick={loadAppointments}>
                 Buscar
               </Button>
