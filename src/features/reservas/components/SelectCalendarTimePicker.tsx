@@ -59,20 +59,25 @@ const CalendarTimePicker: FC<CalendarTimePickerProps> = ({
 
   const availableDates = useMemo(() => {
     const dates = new Set<string>();
+    const now = dayjs();
     times.forEach(slot => {
       const parsed = parseSlotDate(getSlotDateValue(slot));
-      if (parsed) {
-        dates.add(parsed.format("YYYY-MM-DD"));
-      }
+      if (!parsed) return;
+      if (parsed.isBefore(now)) return;
+      dates.add(parsed.format("YYYY-MM-DD"));
     });
     return dates;
   }, [times]);
 
   const timesForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
+    const now = dayjs();
     return times.filter(slot => {
       const parsed = parseSlotDate(getSlotDateValue(slot));
-      return parsed ? parsed.format("YYYY-MM-DD") === selectedDate : false;
+      if (!parsed) return false;
+      if (parsed.format("YYYY-MM-DD") !== selectedDate) return false;
+      if (parsed.isBefore(now)) return false;
+      return true;
     });
   }, [times, selectedDate]);
 
