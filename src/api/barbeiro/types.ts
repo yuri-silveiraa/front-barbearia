@@ -15,3 +15,14 @@ export interface TimeSlot {
   date: string;
   disponible: boolean;
 }
+
+export interface BarberPayment {
+  id: string;
+  amount: number;
+  createdAt: string;
+}
+
+export interface BarberFinanceResponse {
+  balance: number;
+  payments: BarberPayment[];
+}

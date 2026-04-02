@@ -4,6 +4,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import GroupIcon from "@mui/icons-material/Group";
+import PaidIcon from "@mui/icons-material/Paid";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { User } from "../../features/auth/types";
 
@@ -20,6 +21,7 @@ const barberItems = [
   { label: "Agenda", path: "/agenda", icon: <CalendarMonthIcon /> },
   { label: "Agendamentos", path: "/agenda/periodo", icon: <CalendarMonthIcon /> },
   { label: "Horários", path: "/horarios", icon: <ScheduleIcon /> },
+  { label: "Financeiro", path: "/financeiro", icon: <PaidIcon /> },
   { label: "Perfil", path: "/perfil", icon: <PersonIcon /> },
 ];
 
@@ -29,6 +31,7 @@ const adminItems = [
   { label: "Horários", path: "/horarios", icon: <ScheduleIcon /> },
   { label: "Serviços", path: "/servicos", icon: <ContentCutIcon /> },
   { label: "Barbeiros", path: "/barbeiros", icon: <GroupIcon /> },
+  { label: "Financeiro", path: "/financeiro", icon: <PaidIcon /> },
   { label: "Perfil", path: "/perfil", icon: <PersonIcon /> },
 ];
 

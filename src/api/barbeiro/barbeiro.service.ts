@@ -1,5 +1,5 @@
 import { api } from "../../api/http";
-import type { BarberAppointment } from "./types";
+import type { BarberAppointment, BarberFinanceResponse } from "./types";
 
 export async function getBarberTodayAppointments(): Promise<BarberAppointment[]> {
   const { data } = await api.get<BarberAppointment[]>("/barber/today-appointments");
@@ -9,6 +9,13 @@ export async function getBarberTodayAppointments(): Promise<BarberAppointment[]>
 export async function getBarberAppointmentsByRange(start: string, end: string): Promise<BarberAppointment[]> {
   const { data } = await api.get<BarberAppointment[]>(
     `/barber/appointments?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
+  );
+  return data;
+}
+
+export async function getBarberFinanceByRange(start: string, end: string): Promise<BarberFinanceResponse> {
+  const { data } = await api.get<BarberFinanceResponse>(
+    `/barber/payments?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
   );
   return data;
 }

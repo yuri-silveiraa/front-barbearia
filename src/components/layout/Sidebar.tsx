@@ -13,6 +13,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import GroupIcon from "@mui/icons-material/Group";
+import PaidIcon from "@mui/icons-material/Paid";
 import { useNavigate, useLocation } from "react-router-dom";
 import type { User } from "../../features/auth/types";
 
@@ -55,6 +56,11 @@ const barberMenuItems = [
     label: "Horários",
     icon: <ScheduleIcon />,
     path: "/horarios"
+  },
+  {
+    label: "Financeiro",
+    icon: <PaidIcon />,
+    path: "/financeiro"
   }
 ];
 
@@ -88,6 +94,11 @@ const adminMenuItems = [
     label: "Barbeiros",
     icon: <GroupIcon />,
     path: "/barbeiros"
+  },
+  {
+    label: "Financeiro",
+    icon: <PaidIcon />,
+    path: "/financeiro"
   }
 ];
 
