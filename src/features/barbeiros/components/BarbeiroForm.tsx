@@ -6,8 +6,6 @@ import {
   Button,
   TextField,
   Box,
-  FormControlLabel,
-  Switch,
 } from "@mui/material";
 import type { CreateBarberPayload } from "../types";
 
@@ -27,7 +25,6 @@ export function BarbeiroForm({ open, onClose, onSave, loading = false }: Barbeir
       email: (formData.get("email") as string) || "",
       telefone: (formData.get("telefone") as string) || "",
       senha: (formData.get("senha") as string) || "",
-      isAdmin: formData.get("isAdmin") === "on",
     };
     await onSave(data);
   };
@@ -66,10 +63,6 @@ export function BarbeiroForm({ open, onClose, onSave, loading = false }: Barbeir
               fullWidth
               required
               inputProps={{ minLength: 6 }}
-            />
-            <FormControlLabel
-              control={<Switch name="isAdmin" color="primary" />}
-              label="Administrador"
             />
           </Box>
         </DialogContent>

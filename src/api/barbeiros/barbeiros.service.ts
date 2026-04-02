@@ -112,7 +112,6 @@ export async function createBarber(payload: CreateBarberPayload): Promise<void> 
     email: payload.email,
     password: payload.senha,
     telephone: payload.telefone,
-    isAdmin: payload.isAdmin ?? false,
   });
 }
 

@@ -12,5 +12,4 @@ export interface CreateBarberPayload {
   email: string;
   telefone: string;
   senha: string;
-  isAdmin?: boolean;
 }
