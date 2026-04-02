@@ -11,6 +11,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const hasFetched = useRef(false);
+  const logoutInFlight = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -51,12 +52,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function logout() {
-    try {
-      await logoutService();
-    } finally {
-      clearCsrfToken();
-      setUser(null);
+    if (logoutInFlight.current) {
+      return logoutInFlight.current;
     }
+
+    const run = (async () => {
+      try {
+        await logoutService();
+      } finally {
+        clearCsrfToken();
+        setUser(null);
+        logoutInFlight.current = null;
+      }
+    })();
+
+    logoutInFlight.current = run;
+    return run;
   }
 
   async function updateUser(data: UpdateProfileData) {
