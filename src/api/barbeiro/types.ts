@@ -25,4 +25,10 @@ export interface BarberPayment {
 export interface BarberFinanceResponse {
   balance: number;
   payments: BarberPayment[];
+  services?: Array<{
+    serviceId: string;
+    service: string;
+    count: number;
+    total: number;
+  }>;
 }

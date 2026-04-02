@@ -11,6 +11,7 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  Stack,
 } from "@mui/material";
 import { Navigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -45,6 +46,7 @@ export default function FinanceiroPage() {
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [services, setServices] = useState<Array<{ serviceId: string; service: string; count: number; total: number }>>([]);
 
   if (!isBarber) {
     return <Navigate to="/reservas" replace />;
@@ -56,6 +58,7 @@ export default function FinanceiroPage() {
       const data = await getBarberFinanceByRange(start, end);
       setPayments(data.payments || []);
       setBalance(data.balance || 0);
+      setServices(data.services || []);
     } catch {
       setError("Erro ao carregar financeiro");
     } finally {
@@ -86,9 +89,6 @@ export default function FinanceiroPage() {
       <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h5" fontWeight={600}>
-          Financeiro
-        </Typography>
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           <TextField
             type="date"
@@ -97,6 +97,12 @@ export default function FinanceiroPage() {
             onChange={(e) => setStart(e.target.value)}
             InputLabelProps={{ shrink: true }}
             size="small"
+            sx={{
+              "& .MuiInputBase-root": {
+                backgroundColor: "rgba(15, 52, 96, 0.25)",
+                borderRadius: 2,
+              },
+            }}
           />
           <TextField
             type="date"
@@ -105,6 +111,12 @@ export default function FinanceiroPage() {
             onChange={(e) => setEnd(e.target.value)}
             InputLabelProps={{ shrink: true }}
             size="small"
+            sx={{
+              "& .MuiInputBase-root": {
+                backgroundColor: "rgba(15, 52, 96, 0.25)",
+                borderRadius: 2,
+              },
+            }}
           />
           <Button variant="contained" onClick={loadData}>
             Filtrar
@@ -156,31 +168,61 @@ export default function FinanceiroPage() {
             <FinanceChart data={chartData} />
           </Paper>
 
-          <Paper sx={{ p: 2, borderRadius: 3 }}>
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-              Transações
-            </Typography>
-            {payments.length === 0 ? (
-              <Typography color="text.secondary">Nenhuma transação no período.</Typography>
-            ) : (
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Data</TableCell>
-                    <TableCell align="right">Valor</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {payments.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell>{formatDateTime(payment.createdAt)}</TableCell>
-                      <TableCell align="right">{formatCurrency(payment.amount)}</TableCell>
+          <Stack spacing={3}>
+            <Paper sx={{ p: 2, borderRadius: 3 }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+                Serviços mais vendidos
+              </Typography>
+              {services.length === 0 ? (
+                <Typography color="text.secondary">Nenhum serviço no período.</Typography>
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Serviço</TableCell>
+                      <TableCell align="right">Qtd</TableCell>
+                      <TableCell align="right">Total</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </Paper>
+                  </TableHead>
+                  <TableBody>
+                    {services.map((item) => (
+                      <TableRow key={item.serviceId}>
+                        <TableCell>{item.service}</TableCell>
+                        <TableCell align="right">{item.count}</TableCell>
+                        <TableCell align="right">{formatCurrency(item.total)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Paper>
+
+            <Paper sx={{ p: 2, borderRadius: 3 }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+                Transações
+              </Typography>
+              {payments.length === 0 ? (
+                <Typography color="text.secondary">Nenhuma transação no período.</Typography>
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Data</TableCell>
+                      <TableCell align="right">Valor</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {payments.map((payment) => (
+                      <TableRow key={payment.id}>
+                        <TableCell>{formatDateTime(payment.createdAt)}</TableCell>
+                        <TableCell align="right">{formatCurrency(payment.amount)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Paper>
+          </Stack>
         </>
       )}
     </Box>
