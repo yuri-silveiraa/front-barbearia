@@ -14,9 +14,10 @@ import { UserMenu } from "./UserMenu";
 
 interface HeaderProps {
   onMenuClick: () => void;
+  showMenu?: boolean;
 }
 
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header({ onMenuClick, showMenu = true }: HeaderProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const theme = useTheme();
@@ -40,14 +41,16 @@ export function Header({ onMenuClick }: HeaderProps) {
         width: "100%",
       }}>
         <Box sx={{ display: "flex", alignItems: "center", flex: 1 }}>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={onMenuClick}
-            sx={{ mr: 1 }}
-          >
-            <MenuIcon />
-          </IconButton>
+          {showMenu && (
+            <IconButton
+              edge="start"
+              color="inherit"
+              onClick={onMenuClick}
+              sx={{ mr: 1 }}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
 
           <Typography
             variant={isMobile ? "body1" : "h6"}
