@@ -13,6 +13,7 @@ export type AuthContextData = {
   user: User | null;
   isAuthenticated: boolean;
   login: (data: LoginData) => Promise<User>;
+  loginWithGoogle: (credential: string) => Promise<User>;
   verifyEmailAndLogin: (code: string) => Promise<User>;
   updateUser: (data: UpdateProfileData) => Promise<User>;
   deleteUser: () => Promise<void>;

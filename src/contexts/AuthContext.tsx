@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { loginService, getMe, logoutService, updateMe, deleteMe, verifyEmail } from "../api/auth/auth.service";
+import { googleAuthService } from "../api/auth/googleAuth";
 import { fetchCsrfToken, clearCsrfToken } from "../api/http";
 import type { User, AuthContextData, UpdateProfileData } from "../features/auth/types";
 import type { LoginData } from "../api/auth/schema";
@@ -30,6 +31,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function login(data: LoginData) {
     const result = await loginService(data);
+    setUser(result.user);
+    await fetchCsrfToken();
+    return result.user;
+  }
+
+  async function loginWithGoogle(credential: string) {
+    const result = await googleAuthService(credential);
     setUser(result.user);
     await fetchCsrfToken();
     return result.user;
@@ -68,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       isAuthenticated: !!user,
       login,
+      loginWithGoogle,
       verifyEmailAndLogin,
       updateUser,
       deleteUser,

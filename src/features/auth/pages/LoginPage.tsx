@@ -19,14 +19,13 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import { loginSchema } from "../../../api/auth/schema";
-import { googleAuthService } from "../../../api/auth/googleAuth";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import { useAuth } from "../../../contexts/AuthContext";
 import type { LoginData } from "../../../api/auth/schema";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login, user, loadingAuth } = useAuth();
+  const { login, loginWithGoogle, user, loadingAuth } = useAuth();
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -76,8 +75,8 @@ export function LoginPage() {
       if (!credentialResponse.credential) {
         throw new Error("Token Google não disponível");
       }
-      const result = await googleAuthService(credentialResponse.credential);
-      if (result.user.type === "BARBER") {
+      const result = await loginWithGoogle(credentialResponse.credential);
+      if (result.type === "BARBER") {
         navigate("/agenda", { replace: true });
       } else {
         navigate("/reservas", { replace: true });
@@ -95,7 +94,7 @@ export function LoginPage() {
     setError("Falha ao fazer login com Google. Tente novamente.");
   };
 
-  const showGoogleLogin = false;
+  const showGoogleLogin = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
   return (
     <Box
