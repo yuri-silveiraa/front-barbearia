@@ -94,7 +94,7 @@ export default function AgendaBarbeiroPeriodoPage() {
     <Box sx={{ maxWidth: 800, mx: "auto", px: { xs: 2, sm: 3 }, py: 2 }}>
       <FeedbackBanner message={error} severity="error" onClose={() => setError(null)} />
       <Typography variant="h5" sx={{ mb: 0.5, fontWeight: 700, textAlign: "center" }}>
-        Agenda por Período
+        Agendamentos
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: "center" }}>
         Selecione o período e visualize os agendamentos
