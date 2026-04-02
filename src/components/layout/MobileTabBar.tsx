@@ -3,6 +3,7 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
+import GroupIcon from "@mui/icons-material/Group";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { User } from "../../features/auth/types";
 
@@ -27,6 +28,7 @@ const adminItems = [
   { label: "Agendamentos", path: "/agenda/periodo", icon: <CalendarMonthIcon /> },
   { label: "Horários", path: "/horarios", icon: <ScheduleIcon /> },
   { label: "Serviços", path: "/servicos", icon: <ContentCutIcon /> },
+  { label: "Barbeiros", path: "/barbeiros", icon: <GroupIcon /> },
   { label: "Perfil", path: "/perfil", icon: <PersonIcon /> },
 ];
 

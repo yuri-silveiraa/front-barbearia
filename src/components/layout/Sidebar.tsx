@@ -12,6 +12,7 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
+import GroupIcon from "@mui/icons-material/Group";
 import { useNavigate, useLocation } from "react-router-dom";
 import type { User } from "../../features/auth/types";
 
@@ -82,6 +83,11 @@ const adminMenuItems = [
     label: "Serviços",
     icon: <ContentCutIcon />,
     path: "/servicos"
+  },
+  {
+    label: "Barbeiros",
+    icon: <GroupIcon />,
+    path: "/barbeiros"
   }
 ];
 

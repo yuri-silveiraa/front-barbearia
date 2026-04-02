@@ -12,6 +12,7 @@ import DetalhesAgendamentoPage from "../features/barbeiro/pages/DetalhesAgendame
 import HorariosPage from "../features/barbeiro/pages/HorariosPage";
 import ServicosPage from "../features/servicos/pages/ServicosPage";
 import AgendaBarbeiroPeriodoPage from "../features/barbeiro/pages/AgendaBarbeiroPeriodoPage";
+import BarbeirosPage from "../features/barbeiros/pages/BarbeirosPage";
 
 export default function AppRoutes() {
   return (
@@ -38,6 +39,7 @@ export default function AppRoutes() {
           <Route path="agenda/periodo" element={<AgendaBarbeiroPeriodoPage />} />
           <Route path="horarios" element={<HorariosPage />} />
           <Route path="servicos" element={<ServicosPage />} />
+          <Route path="barbeiros" element={<BarbeirosPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/reservas" replace />} />
