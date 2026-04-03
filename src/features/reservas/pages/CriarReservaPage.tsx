@@ -54,8 +54,6 @@ export default function CriarReservaPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [times, setTimes] = useState<TimeSlot[]>([]);
   const [currentBarberId, setCurrentBarberId] = useState<string>("");
-  const [selectedBarber, setSelectedBarber] = useState<string>("");
-  const [selectedService, setSelectedService] = useState<string>("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +65,7 @@ export default function CriarReservaPage() {
     control,
     formState: { errors, isSubmitting },
     watch,
+    getValues,
     reset,
     setValue,
     trigger
@@ -193,7 +192,6 @@ export default function CriarReservaPage() {
                 value={field.value}
                 onChange={(val) => {
                   field.onChange(val);
-                  setSelectedBarber(val);
                 }}
                 loading={loading}
                 error={errors.barberId?.message}
@@ -212,7 +210,6 @@ export default function CriarReservaPage() {
                 value={field.value}
                 onChange={(val) => {
                   field.onChange(val);
-                  setSelectedService(val);
                 }}
                 loading={loading}
                 error={errors.serviceId?.message}
@@ -336,19 +333,17 @@ export default function CriarReservaPage() {
             ) : (
               <Button
                 size="small"
-                onClick={() => {
-                  const values = watch();
-                  const barberId = values.barberId || selectedBarber;
-                  const serviceId = values.serviceId || selectedService;
-                  const timeId = values.timeId;
+                onClick={async () => {
+                  const { barberId, serviceId, timeId } = getValues();
+                  const isTimeValid = await trigger("timeId");
 
-                  if (!barberId || !serviceId || !timeId) {
+                  if (!barberId || !serviceId || !timeId || !isTimeValid) {
                     setError("Selecione o barbeiro, serviço e horário");
                     return;
                   }
 
                   setError(null);
-                  onSubmit(barberId, serviceId, timeId);
+                  await onSubmit(barberId, serviceId, timeId);
                 }}
                 disabled={isSubmitting || loading}
                 variant="contained"

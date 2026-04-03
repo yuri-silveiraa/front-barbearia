@@ -11,7 +11,9 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  useMediaQuery,
+  useTheme
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
@@ -31,6 +33,8 @@ export function ListaReservasPage() {
   const [canceling, setCanceling] = useState(false);
   const navigate = useNavigate();
   const hasFetched = useRef(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const getStatusConfig = (status: string) => {
     const configs = {
@@ -84,6 +88,15 @@ export function ListaReservasPage() {
     hasFetched.current = true;
     carregar();
   }, []);
+
+  const formatReservaDate = (value: string) =>
+    new Date(value).toLocaleString("pt-BR", {
+      weekday: isMobile ? "short" : "long",
+      day: "numeric",
+      month: isMobile ? "2-digit" : "long",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
 
   if (loading) {
     return (
@@ -215,13 +228,7 @@ export function ListaReservasPage() {
                       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                         <ScheduleIcon sx={{ fontSize: 16, color: "text.secondary" }} />
                         <Typography variant="body2" color="text.secondary">
-                          {new Date(reserva.time).toLocaleString("pt-BR", {
-                            weekday: "long",
-                            day: "numeric",
-                            month: "long",
-                            hour: "2-digit",
-                            minute: "2-digit"
-                          })}
+                          {formatReservaDate(reserva.time)}
                         </Typography>
                       </Box>
                     </Box>
