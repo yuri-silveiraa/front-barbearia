@@ -9,9 +9,10 @@ export function MainLayout() {
   const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const headerHeight = { xs: 56, sm: 64 };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+    <Box sx={{ display: "flex", minHeight: "100svh" }}>
       <Header
         onMenuClick={() => !isMobile && setSidebarOpen(true)}
         showMenu={!isMobile}
@@ -30,12 +31,15 @@ export function MainLayout() {
         sx={{
           flexGrow: 1,
           p: { xs: 1.5, sm: 3 },
-          mt: { xs: 7, sm: 8 },
+          mt: headerHeight,
           pb: { xs: 10, md: 3 },
           ml: 0,
           width: "100%",
           backgroundColor: "background.default",
-          minHeight: "calc(100vh - 64px)"
+          minHeight: {
+            xs: "calc(100svh - 56px)",
+            sm: "calc(100svh - 64px)"
+          }
         }}
       >
         <Outlet />
