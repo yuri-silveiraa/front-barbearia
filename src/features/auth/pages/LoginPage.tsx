@@ -146,11 +146,39 @@ export function LoginPage() {
 
           <Box sx={{ mb: 3 }}>
             {showGoogleLogin && (
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                useOneTap
-              />
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  width: "100%",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: "100%",
+                    maxWidth: 360,
+                    p: 1,
+                    borderRadius: 3,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    backgroundColor: "rgba(255,255,255,0.04)",
+                    display: "flex",
+                    justifyContent: "center",
+                  }}
+                >
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    useOneTap
+                    theme="outline"
+                    shape="pill"
+                    size="large"
+                    text="continue_with"
+                    logo_alignment="left"
+                    width={320}
+                  />
+                </Box>
+              </Box>
             )}
           </Box>
 
