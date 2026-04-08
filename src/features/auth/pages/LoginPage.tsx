@@ -99,12 +99,13 @@ export function LoginPage() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
-        p: 2
+        p: 2,
+        pb: { xs: 10, sm: 2 }
       }}
     >
       <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />

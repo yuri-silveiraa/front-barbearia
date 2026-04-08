@@ -94,12 +94,13 @@ export default function VerificarEmailPage() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "background.default",
         px: 2,
+        pb: { xs: 10, sm: 2 }
       }}
     >
       <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />

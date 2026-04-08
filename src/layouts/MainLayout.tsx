@@ -12,7 +12,7 @@ export function MainLayout() {
   const headerHeight = { xs: 56, sm: 64 };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100svh" }}>
+    <Box sx={{ display: "flex", minHeight: "100dvh" }}>
       <Header
         onMenuClick={() => !isMobile && setSidebarOpen(true)}
         showMenu={!isMobile}
@@ -37,8 +37,8 @@ export function MainLayout() {
           width: "100%",
           backgroundColor: "background.default",
           minHeight: {
-            xs: "calc(100svh - 56px)",
-            sm: "calc(100svh - 64px)"
+            xs: "calc(100dvh - 56px)",
+            sm: "calc(100dvh - 64px)"
           }
         }}
       >
