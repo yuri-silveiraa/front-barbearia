@@ -8,7 +8,9 @@ import {
   CardContent,
   Chip,
   Grid,
-  Button
+  Button,
+  useMediaQuery,
+  useTheme
 } from "@mui/material";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -40,6 +42,8 @@ export default function AgendaBarbeiroPeriodoPage() {
   const [error, setError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState(dayjs().startOf("day"));
   const [endDate, setEndDate] = useState(dayjs().startOf("day"));
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const grouped = useMemo(() => {
     const map = new Map<string, BarberAppointment[]>();
@@ -149,7 +153,7 @@ export default function AgendaBarbeiroPeriodoPage() {
       {grouped.map(([dateKey, dayAppointments]) => (
         <Box key={dateKey} sx={{ mb: 3 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-            {dayjs(dateKey).format("DD/MM/YYYY")}
+            {dayjs(dateKey).format(isMobile ? "DD/MM" : "DD/MM/YYYY")}
           </Typography>
 
           {dayAppointments.map((appointment) => (

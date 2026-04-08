@@ -12,7 +12,9 @@ import {
   DialogContentText,
   DialogActions,
   Divider,
-  Chip
+  Chip,
+  useMediaQuery,
+  useTheme
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -32,6 +34,8 @@ export default function DetalhesAgendamentoPage() {
   const [error, setError] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     loadAppointment();
@@ -101,7 +105,12 @@ export default function DetalhesAgendamentoPage() {
   const formatDate = (timeStr: string) => {
     try {
       const date = new Date(timeStr);
-      return date.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+      return date.toLocaleDateString("pt-BR", {
+        weekday: isMobile ? "short" : "long",
+        day: "numeric",
+        month: isMobile ? "2-digit" : "long",
+        year: "numeric"
+      });
     } catch {
       return "";
     }
@@ -137,7 +146,7 @@ export default function DetalhesAgendamentoPage() {
       </Button>
 
       <Paper sx={{ p: 3, borderRadius: 3 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, flexWrap: "wrap", gap: 1 }}>
           <Typography variant="h5" fontWeight={700}>
             Detalhes do Agendamento
           </Typography>
@@ -191,7 +200,7 @@ export default function DetalhesAgendamentoPage() {
         </Box>
 
         {appointment.status === "SCHEDULED" && (
-          <Box sx={{ display: "flex", gap: 2, mt: 4 }}>
+          <Box sx={{ display: "flex", gap: 2, mt: 4, flexDirection: { xs: "column", sm: "row" } }}>
             <Button
               variant="contained"
               color="success"

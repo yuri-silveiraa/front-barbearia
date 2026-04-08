@@ -8,7 +8,9 @@ import {
   Card,
   CardContent,
   Chip,
-  IconButton
+  IconButton,
+  useMediaQuery,
+  useTheme
 } from "@mui/material";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -36,6 +38,8 @@ export default function AgendaBarbeiroPage() {
   const [appointments, setAppointments] = useState<BarberAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     loadAppointments();
@@ -66,6 +70,9 @@ export default function AgendaBarbeiroPage() {
     }
   };
 
+  const scheduledCount = appointments.filter((a) => a.status === "SCHEDULED").length;
+  const completedCount = appointments.filter((a) => a.status === "COMPLETED").length;
+
   return (
     <Box sx={{ maxWidth: 600, mx: "auto", px: { xs: 2, sm: 3 }, py: 2 }}>
       <FeedbackBanner message={error} severity="error" onClose={() => setError(null)} />
@@ -73,8 +80,28 @@ export default function AgendaBarbeiroPage() {
         Agenda do Dia
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: "center" }}>
-        {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+        {new Date().toLocaleDateString("pt-BR", {
+          weekday: isMobile ? "short" : "long",
+          day: "numeric",
+          month: isMobile ? "2-digit" : "long"
+        })}
       </Typography>
+
+      {!loading && appointments.length > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1,
+            justifyContent: "center",
+            flexWrap: "wrap",
+            mb: 2
+          }}
+        >
+          <Chip label={`Total: ${appointments.length}`} variant="outlined" />
+          <Chip label={`Agendados: ${scheduledCount}`} color="default" />
+          <Chip label={`Atendidos: ${completedCount}`} color="success" />
+        </Box>
+      )}
 
       {loading && (
         <Box display="flex" justifyContent="center" py={4}>

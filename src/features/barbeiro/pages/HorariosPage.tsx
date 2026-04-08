@@ -18,9 +18,12 @@ import {
   FormLabel,
   CircularProgress,
   Popover,
+  Drawer,
   IconButton,
   TextField,
   MenuItem,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { PickersDay } from "@mui/x-date-pickers";
@@ -115,6 +118,9 @@ export default function HorariosPage() {
   const [selectedDayAnchor, setSelectedDayAnchor] = useState<{ el: HTMLElement | null; date: string } | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; loading: boolean }>({ open: false, loading: false });
+  const [selectedWarningOption, setSelectedWarningOption] = useState("0");
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -220,6 +226,7 @@ export default function HorariosPage() {
       if (response.validation.warning && !pendingParams) {
         setWarningDialog(response.validation);
         setPendingParams(params);
+        setSelectedWarningOption("0");
         return;
       }
 
@@ -513,85 +520,165 @@ export default function HorariosPage() {
         )}
       </Paper>
 
-      <Popover
-        open={!!selectedDayAnchor}
-        anchorEl={selectedDayAnchor?.el}
-        onClose={() => {
-          setSelectedDayAnchor(null);
-          setSelectedSlots([]);
-        }}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        transformOrigin={{ vertical: "top", horizontal: "center" }}
-        PaperProps={{ sx: { backgroundColor: "background.paper", minWidth: 300 } }}
-      >
-        <Box sx={{ p: 2, maxHeight: 400, overflow: "auto" }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "text.primary" }}>
-              {selectedDayAnchor?.date && dayjs(selectedDayAnchor.date).format("DD/MM/YYYY")}
-            </Typography>
-            <IconButton size="small" onClick={() => {
-              setSelectedDayAnchor(null);
-              setSelectedSlots([]);
-            }}>
-              <CloseIcon fontSize="small" />
-            </IconButton>
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={!!selectedDayAnchor}
+          onClose={() => {
+            setSelectedDayAnchor(null);
+            setSelectedSlots([]);
+          }}
+          PaperProps={{ sx: { backgroundColor: "background.paper" } }}
+        >
+          <Box sx={{ p: 2, maxHeight: "65vh", overflow: "auto" }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "text.primary" }}>
+                {selectedDayAnchor?.date && dayjs(selectedDayAnchor.date).format("DD/MM/YYYY")}
+              </Typography>
+              <IconButton size="small" onClick={() => {
+                setSelectedDayAnchor(null);
+                setSelectedSlots([]);
+              }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+
+            {selectedDayAnchor && getSlotsForDay(selectedDayAnchor.date).length === 0 ? (
+              <Typography color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
+                Nenhum horário disponível
+              </Typography>
+            ) : (
+              <>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 2 }}>
+                  {selectedDayAnchor && getSlotsForDay(selectedDayAnchor.date).map((slot) => (
+                    <FormControlLabel
+                      key={slot.id}
+                      control={
+                        <Checkbox
+                          size="medium"
+                          checked={selectedSlots.includes(slot.id)}
+                          onChange={() => handleCheckboxChange(slot.id)}
+                        />
+                      }
+                      label={
+                        <Typography color="text.primary">
+                          {dayjs(slot.date).format("HH:mm")}
+                        </Typography>
+                      }
+                      sx={{
+                        margin: 0,
+                        "&:hover": { backgroundColor: "action.hover", borderRadius: 1 }
+                      }}
+                    />
+                  ))}
+                </Box>
+
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  <Button
+                    size="small"
+                    onClick={handleSelectAll}
+                    disabled={!selectedDayAnchor}
+                  >
+                    {selectedDayAnchor && selectedSlots.length === getSlotsForDay(selectedDayAnchor.date).length
+                      ? "Desmarcar Todos"
+                      : "Selecionar Todos"}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    size="small"
+                    onClick={() => setDeleteDialog({ open: true, loading: false })}
+                    disabled={selectedSlots.length === 0}
+                    startIcon={<DeleteIcon />}
+                  >
+                    Excluir ({selectedSlots.length})
+                  </Button>
+                </Box>
+              </>
+            )}
           </Box>
-          
-          {selectedDayAnchor && getSlotsForDay(selectedDayAnchor.date).length === 0 ? (
-            <Typography color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
-              Nenhum horário disponível
-            </Typography>
-          ) : (
-            <>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 2 }}>
-                {selectedDayAnchor && getSlotsForDay(selectedDayAnchor.date).map((slot) => (
-                  <FormControlLabel
-                    key={slot.id}
-                    control={
-                      <Checkbox
-                        size="medium"
-                        checked={selectedSlots.includes(slot.id)}
-                        onChange={() => handleCheckboxChange(slot.id)}
-                      />
-                    }
-                    label={
-                      <Typography color="text.primary">
-                        {dayjs(slot.date).format("HH:mm")}
-                      </Typography>
-                    }
-                    sx={{ 
-                      margin: 0,
-                      "&:hover": { backgroundColor: "action.hover", borderRadius: 1 }
-                    }}
-                  />
-                ))}
-              </Box>
-              
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                <Button 
-                  size="small" 
-                  onClick={handleSelectAll}
-                  disabled={!selectedDayAnchor}
-                >
-                  {selectedDayAnchor && selectedSlots.length === getSlotsForDay(selectedDayAnchor.date).length 
-                    ? "Desmarcar Todos" 
-                    : "Selecionar Todos"}
-                </Button>
-                <Button 
-                  variant="contained" 
-                  color="error"
-                  size="small"
-                  onClick={() => setDeleteDialog({ open: true, loading: false })}
-                  disabled={selectedSlots.length === 0}
-                  startIcon={<DeleteIcon />}
-                >
-                  Excluir ({selectedSlots.length})
-                </Button>
-              </Box>
-            </>
-          )}
-        </Box>
-      </Popover>
+        </Drawer>
+      ) : (
+        <Popover
+          open={!!selectedDayAnchor}
+          anchorEl={selectedDayAnchor?.el}
+          onClose={() => {
+            setSelectedDayAnchor(null);
+            setSelectedSlots([]);
+          }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          transformOrigin={{ vertical: "top", horizontal: "center" }}
+          PaperProps={{ sx: { backgroundColor: "background.paper", minWidth: 300 } }}
+        >
+          <Box sx={{ p: 2, maxHeight: 400, overflow: "auto" }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "text.primary" }}>
+                {selectedDayAnchor?.date && dayjs(selectedDayAnchor.date).format("DD/MM/YYYY")}
+              </Typography>
+              <IconButton size="small" onClick={() => {
+                setSelectedDayAnchor(null);
+                setSelectedSlots([]);
+              }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+
+            {selectedDayAnchor && getSlotsForDay(selectedDayAnchor.date).length === 0 ? (
+              <Typography color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
+                Nenhum horário disponível
+              </Typography>
+            ) : (
+              <>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 2 }}>
+                  {selectedDayAnchor && getSlotsForDay(selectedDayAnchor.date).map((slot) => (
+                    <FormControlLabel
+                      key={slot.id}
+                      control={
+                        <Checkbox
+                          size="medium"
+                          checked={selectedSlots.includes(slot.id)}
+                          onChange={() => handleCheckboxChange(slot.id)}
+                        />
+                      }
+                      label={
+                        <Typography color="text.primary">
+                          {dayjs(slot.date).format("HH:mm")}
+                        </Typography>
+                      }
+                      sx={{
+                        margin: 0,
+                        "&:hover": { backgroundColor: "action.hover", borderRadius: 1 }
+                      }}
+                    />
+                  ))}
+                </Box>
+
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  <Button
+                    size="small"
+                    onClick={handleSelectAll}
+                    disabled={!selectedDayAnchor}
+                  >
+                    {selectedDayAnchor && selectedSlots.length === getSlotsForDay(selectedDayAnchor.date).length
+                      ? "Desmarcar Todos"
+                      : "Selecionar Todos"}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    size="small"
+                    onClick={() => setDeleteDialog({ open: true, loading: false })}
+                    disabled={selectedSlots.length === 0}
+                    startIcon={<DeleteIcon />}
+                  >
+                    Excluir ({selectedSlots.length})
+                  </Button>
+                </Box>
+              </>
+            )}
+          </Box>
+        </Popover>
+      )}
 
       <Dialog 
         open={!!warningDialog} 
@@ -607,7 +694,10 @@ export default function HorariosPage() {
           </Alert>
           <FormControl>
             <FormLabel sx={{ color: "text.primary" }}>Escolha uma opção:</FormLabel>
-            <RadioGroup>
+            <RadioGroup
+              value={selectedWarningOption}
+              onChange={(event) => setSelectedWarningOption(event.target.value)}
+            >
               {warningDialog?.warning?.options.map((opt, idx) => (
                 <FormControlLabel
                   key={idx}
@@ -622,7 +712,7 @@ export default function HorariosPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setWarningDialog(null)} sx={{ color: "text.secondary" }}>Cancelar</Button>
-          <Button variant="contained" onClick={() => handleWarningConfirm(0)}>
+          <Button variant="contained" onClick={() => handleWarningConfirm(Number(selectedWarningOption))}>
             Confirmar
           </Button>
         </DialogActions>
