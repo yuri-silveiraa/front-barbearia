@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
-  Paper,
   Typography,
   TextField,
   Button,
@@ -14,6 +13,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import { resendVerificationCode } from "../../../api/auth/auth.service";
 import { useAuth } from "../../../contexts/AuthContext";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import { AuthLayout } from "../../../layouts/AuthLayout";
+import authHero from "../../../assets/auth-hero.svg";
 
 export default function VerificarEmailPage() {
   const navigate = useNavigate();
@@ -92,41 +93,22 @@ export default function VerificarEmailPage() {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100dvh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "background.default",
-        px: 2,
-        pb: { xs: 10, sm: 2 }
-      }}
-    >
+    <>
       <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />
       <FeedbackBanner message={success} severity="success" onClose={() => setSuccess("")} />
-      <Paper
-        elevation={3}
-        sx={{
-          p: 4,
-          maxWidth: 400,
-          width: "100%",
-          borderRadius: 3,
-          textAlign: "center",
-        }}
+      <AuthLayout
+        title="Verificar Email"
+        subtitle="Digite o código de 6 dígitos enviado para você"
+        backgroundImage={authHero}
       >
-        <EmailIcon sx={{ fontSize: 48, color: "primary.main", mb: 2 }} />
-        
-        <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
-          Verificar Email
-        </Typography>
-        
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Digite o código de 6 dígitos enviado para<br />
-          <strong>{email}</strong>
-        </Typography>
+        <Box sx={{ textAlign: "center", mb: 2 }}>
+          <EmailIcon sx={{ fontSize: 44, color: "primary.main", mb: 1 }} />
+          <Typography variant="body2" color="text.secondary">
+            <strong>{email}</strong>
+          </Typography>
+        </Box>
 
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 2, textAlign: "center" }}>
           <Link
             component="button"
             type="button"
@@ -151,9 +133,15 @@ export default function VerificarEmailPage() {
           label="Código de verificação"
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-          inputProps={{ 
-            maxLength: 6, 
-            style: { textAlign: "center", letterSpacing: "0.5em", fontSize: "1.5rem" }
+          inputProps={{
+            inputMode: "numeric",
+            pattern: "[0-9]*",
+            maxLength: 6,
+            style: {
+              textAlign: "center",
+              letterSpacing: "0.4em",
+              fontSize: "1.4rem"
+            }
           }}
           sx={{ mb: 3 }}
         />
@@ -175,13 +163,13 @@ export default function VerificarEmailPage() {
           onClick={handleResend}
           disabled={resending || cooldown > 0}
         >
-          {resending 
-            ? "Enviando..." 
-            : cooldown > 0 
-              ? `Aguarde ${cooldown}s` 
+          {resending
+            ? "Enviando..."
+            : cooldown > 0
+              ? `Aguarde ${cooldown}s`
               : "Reenviar código"}
         </Button>
-      </Paper>
-    </Box>
+      </AuthLayout>
+    </>
   );
 }

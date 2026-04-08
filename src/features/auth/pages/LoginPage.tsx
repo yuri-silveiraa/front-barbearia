@@ -5,8 +5,6 @@ import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   TextField,
   Typography,
   Divider,
@@ -17,10 +15,11 @@ import {
 import { GoogleLogin } from "@react-oauth/google";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import ContentCutIcon from "@mui/icons-material/ContentCut";
 import { loginSchema } from "../../../api/auth/schema";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import { useAuth } from "../../../contexts/AuthContext";
+import { AuthLayout } from "../../../layouts/AuthLayout";
+import authHero from "../../../assets/auth-hero.svg";
 import type { LoginData } from "../../../api/auth/schema";
 
 export function LoginPage() {
@@ -97,54 +96,13 @@ export function LoginPage() {
   const showGoogleLogin = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
   return (
-    <Box
-      sx={{
-        minHeight: "100dvh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
-        p: 2,
-        pb: { xs: 10, sm: 2 }
-      }}
-    >
+    <>
       <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />
-      <Card
-        sx={{
-          width: "100%",
-          maxWidth: 440,
-          borderRadius: 4,
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-          overflow: "visible"
-        }}
+      <AuthLayout
+        title="Douglas Barbearia"
+        subtitle="Entre na sua conta para continuar"
+        backgroundImage={authHero}
       >
-        <CardContent sx={{ p: 4 }}>
-          <Box sx={{ textAlign: "center", mb: 4 }}>
-            <Box
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #00bfa5 0%, #ffab00 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                mx: "auto",
-                mb: 2,
-                boxShadow: "0 8px 20px rgba(0, 191, 165, 0.3)"
-              }}
-            >
-              <ContentCutIcon sx={{ color: "white", fontSize: 32 }} />
-            </Box>
-            
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-              Douglas Barbearia
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Entre na sua conta para continuar
-            </Typography>
-          </Box>
-
           <Box sx={{ mb: 3, display: "flex", justifyContent: "center" }}>
             {showGoogleLogin && (
               <GoogleLogin
@@ -179,6 +137,7 @@ export function LoginPage() {
               error={!!errors.email}
               helperText={errors.email?.message}
               autoComplete="email"
+              size="medium"
             />
 
             <TextField
@@ -190,6 +149,7 @@ export function LoginPage() {
               error={!!errors.password}
               helperText={errors.password?.message}
               autoComplete="current-password"
+              size="medium"
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -238,8 +198,7 @@ export function LoginPage() {
               </Typography>
             </Typography>
           </Box>
-        </CardContent>
-      </Card>
-    </Box>
+      </AuthLayout>
+    </>
   );
 }

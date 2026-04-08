@@ -5,8 +5,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   TextField,
   Typography,
   IconButton,
@@ -15,11 +13,11 @@ import {
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import ContentCutIcon from "@mui/icons-material/ContentCut";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { registerSchema } from "../../../api/auth/schema";
 import { registerService } from "../../../api/auth/auth.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import { AuthLayout } from "../../../layouts/AuthLayout";
+import authHero from "../../../assets/auth-hero.svg";
 import type { RegisterData } from "../../../api/auth/schema";
 
 export function CadastroPage() {
@@ -81,62 +79,15 @@ export function CadastroPage() {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: "100dvh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
-        p: 2,
-        pb: { xs: 10, sm: 2 }
-      }}
-    >
+    <>
       <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />
-      <Card
-        sx={{
-          width: "100%",
-          maxWidth: 440,
-          borderRadius: 4,
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-          overflow: "visible"
-        }}
+      <AuthLayout
+        title="Criar Conta"
+        subtitle="Cadastre-se para fazer suas reservas"
+        showBack
+        onBack={() => navigate("/login")}
+        backgroundImage={authHero}
       >
-        <CardContent sx={{ p: 4 }}>
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate("/login")}
-            sx={{ mb: 2, color: "text.secondary" }}
-          >
-            Voltar
-          </Button>
-
-          <Box sx={{ textAlign: "center", mb: 4 }}>
-            <Box
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #00bfa5 0%, #ffab00 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                mx: "auto",
-                mb: 2,
-                boxShadow: "0 8px 20px rgba(0, 191, 165, 0.3)"
-              }}
-            >
-              <ContentCutIcon sx={{ color: "white", fontSize: 32 }} />
-            </Box>
-            
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-              Criar Conta
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Cadastre-se para fazer suas reservas
-            </Typography>
-          </Box>
-
           <form onSubmit={handleSubmit(onSubmit)}>
             <TextField
               label="Nome completo"
@@ -146,6 +97,7 @@ export function CadastroPage() {
               error={!!errors.name}
               helperText={errors.name?.message}
               autoComplete="name"
+              size="medium"
             />
 
             <TextField
@@ -157,6 +109,7 @@ export function CadastroPage() {
               error={!!errors.email}
               helperText={errors.email?.message}
               autoComplete="email"
+              size="medium"
             />
 
             <TextField
@@ -168,6 +121,7 @@ export function CadastroPage() {
               error={!!errors.password}
               helperText={errors.password?.message}
               autoComplete="new-password"
+              size="medium"
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -191,6 +145,7 @@ export function CadastroPage() {
               error={!!errors.confirmPassword}
               helperText={errors.confirmPassword?.message}
               autoComplete="new-password"
+              size="medium"
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -213,6 +168,7 @@ export function CadastroPage() {
               error={!!errors.telephone}
               helperText={errors.telephone?.message || "Ex: 11999999999"}
               autoComplete="tel"
+              size="medium"
             />
 
             <Button
@@ -249,8 +205,7 @@ export function CadastroPage() {
               </Typography>
             </Typography>
           </Box>
-        </CardContent>
-      </Card>
-    </Box>
+      </AuthLayout>
+    </>
   );
 }
