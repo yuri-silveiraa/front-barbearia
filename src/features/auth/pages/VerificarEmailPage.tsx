@@ -14,7 +14,6 @@ import { resendVerificationCode } from "../../../api/auth/auth.service";
 import { useAuth } from "../../../contexts/AuthContext";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import { AuthLayout } from "../../../layouts/AuthLayout";
-import authHero from "../../../assets/auth-hero.svg";
 
 export default function VerificarEmailPage() {
   const navigate = useNavigate();
@@ -99,7 +98,7 @@ export default function VerificarEmailPage() {
       <AuthLayout
         title="Verificar Email"
         subtitle="Digite o código de 6 dígitos enviado para você"
-        backgroundImage={authHero}
+        backgroundImage="/images/photo-1585747860715-2ba37e788b70.jpg"
       >
         <Box sx={{ textAlign: "center", mb: 2 }}>
           <EmailIcon sx={{ fontSize: 44, color: "primary.main", mb: 1 }} />

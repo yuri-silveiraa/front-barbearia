@@ -19,7 +19,6 @@ import { loginSchema } from "../../../api/auth/schema";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import { useAuth } from "../../../contexts/AuthContext";
 import { AuthLayout } from "../../../layouts/AuthLayout";
-import authHero from "../../../assets/auth-hero.svg";
 import type { LoginData } from "../../../api/auth/schema";
 
 export function LoginPage() {
@@ -101,7 +100,7 @@ export function LoginPage() {
       <AuthLayout
         title="Douglas Barbearia"
         subtitle="Entre na sua conta para continuar"
-        backgroundImage={authHero}
+        backgroundImage="/images/photo-1585747860715-2ba37e788b70.jpg"
       >
           <Box sx={{ mb: 3, display: "flex", justifyContent: "center" }}>
             {showGoogleLogin && (

@@ -17,7 +17,6 @@ import { registerSchema } from "../../../api/auth/schema";
 import { registerService } from "../../../api/auth/auth.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import { AuthLayout } from "../../../layouts/AuthLayout";
-import authHero from "../../../assets/auth-hero.svg";
 import type { RegisterData } from "../../../api/auth/schema";
 
 export function CadastroPage() {
@@ -86,7 +85,7 @@ export function CadastroPage() {
         subtitle="Cadastre-se para fazer suas reservas"
         showBack
         onBack={() => navigate("/login")}
-        backgroundImage={authHero}
+        backgroundImage="/images/photo-1585747860715-2ba37e788b70.jpg"
       >
           <form onSubmit={handleSubmit(onSubmit)}>
             <TextField
