@@ -100,7 +100,7 @@ export function LoginPage() {
       <AuthLayout
         title="Douglas Barbearia"
         subtitle="Entre na sua conta para continuar"
-        backgroundImage="/images/photo-1585747860715-2ba37e788b70.jpg"
+        backgroundImage="/images/barbeiro-background-login.jpg"
       >
           <Box sx={{ mb: 3, display: "flex", justifyContent: "center" }}>
             {showGoogleLogin && (

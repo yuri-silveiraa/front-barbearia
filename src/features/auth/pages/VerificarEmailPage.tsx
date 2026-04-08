@@ -98,7 +98,7 @@ export default function VerificarEmailPage() {
       <AuthLayout
         title="Verificar Email"
         subtitle="Digite o código de 6 dígitos enviado para você"
-        backgroundImage="/images/photo-1585747860715-2ba37e788b70.jpg"
+        backgroundImage="/images/barbeiro-background-login.jpg"
       >
         <Box sx={{ textAlign: "center", mb: 2 }}>
           <EmailIcon sx={{ fontSize: 44, color: "primary.main", mb: 1 }} />

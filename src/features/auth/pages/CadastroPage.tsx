@@ -85,7 +85,7 @@ export function CadastroPage() {
         subtitle="Cadastre-se para fazer suas reservas"
         showBack
         onBack={() => navigate("/login")}
-        backgroundImage="/images/photo-1585747860715-2ba37e788b70.jpg"
+        backgroundImage="/images/barbeiro-background-login.jpg"
       >
           <form onSubmit={handleSubmit(onSubmit)}>
             <TextField
