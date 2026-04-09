@@ -112,11 +112,30 @@ export default function BarbeirosPage() {
       <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />
       <FeedbackBanner message={success} severity="success" onClose={() => setSuccess("")} />
 
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h5" fontWeight={600}>
-          Gerenciar Barbeiros
-        </Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenForm}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: { xs: "flex-start", sm: "center" },
+          flexDirection: { xs: "column", sm: "row" },
+          gap: 2,
+          mb: 3
+        }}
+      >
+        <Box>
+          <Typography variant="h5" fontWeight={700}>
+            Gerenciar Barbeiros
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Cadastre e desative barbeiros com facilidade
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleOpenForm}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
+        >
           Novo Barbeiro
         </Button>
       </Box>
@@ -126,9 +145,14 @@ export default function BarbeirosPage() {
           <CircularProgress />
         </Box>
       ) : barbers.length === 0 ? (
-        <Typography color="text.secondary" align="center" py={4}>
-          Nenhum barbeiro cadastrado
-        </Typography>
+        <Box sx={{ textAlign: "center", py: 4 }}>
+          <Typography color="text.secondary" sx={{ mb: 2 }}>
+            Nenhum barbeiro cadastrado
+          </Typography>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenForm}>
+            Cadastrar primeiro barbeiro
+          </Button>
+        </Box>
       ) : (
         <Box
           sx={{

@@ -165,6 +165,18 @@ export function PerfilPage() {
           <Typography variant="h5" sx={{ fontWeight: 600, mt: 2, textAlign: "center" }}>
             {user?.name || "Usuário"}
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", mt: 0.5 }}>
+            Atualize seus dados pessoais e preferências
+          </Typography>
+
+          <Box sx={{ display: "flex", gap: 1.5, mt: 2, width: "100%", flexDirection: { xs: "column", sm: "row" } }}>
+            <Button variant="contained" onClick={() => setEditOpen(true)} fullWidth>
+              Editar perfil
+            </Button>
+            <Button variant="outlined" color="error" onClick={() => setDeleteOpen(true)} fullWidth>
+              Excluir conta
+            </Button>
+          </Box>
         </Box>
 
         <Divider sx={{ my: 2 }} />
@@ -194,13 +206,6 @@ export function PerfilPage() {
                   {user?.name || "Não informado"}
                 </Typography>
               </Box>
-              <Button
-                size="small"
-                onClick={() => setEditOpen(true)}
-                sx={{ flexShrink: 0 }}
-              >
-                Editar
-              </Button>
             </Box>
           </Grid>
 
@@ -224,17 +229,18 @@ export function PerfilPage() {
                 <Typography variant="caption" color="text.secondary">
                   Email
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis" }}>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontWeight: 500,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    overflowWrap: "anywhere"
+                  }}
+                >
                   {user?.email || "Não informado"}
                 </Typography>
               </Box>
-              <Button
-                size="small"
-                onClick={() => setEditOpen(true)}
-                sx={{ flexShrink: 0 }}
-              >
-                Editar
-              </Button>
             </Box>
           </Grid>
 
@@ -258,33 +264,22 @@ export function PerfilPage() {
                 <Typography variant="caption" color="text.secondary">
                   Telefone
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis" }}>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontWeight: 500,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    overflowWrap: "anywhere"
+                  }}
+                >
                   {user?.phone || "Não informado"}
                 </Typography>
               </Box>
-              <Button
-                size="small"
-                onClick={() => setEditOpen(true)}
-                sx={{ flexShrink: 0 }}
-              >
-                Editar
-              </Button>
             </Box>
           </Grid>
         </Grid>
 
-        <Divider sx={{ my: 2 }} />
-
-        <Box sx={{ textAlign: "center" }}>
-          <Button
-            variant="outlined"
-            color="error"
-            size="small"
-            onClick={() => setDeleteOpen(true)}
-          >
-            Excluir Conta
-          </Button>
-        </Box>
       </Paper>
 
       <Dialog open={editOpen} onClose={() => !isSubmitting && setEditOpen(false)} fullWidth maxWidth="sm">
@@ -314,6 +309,7 @@ export function PerfilPage() {
               {...register("telephone")}
               error={!!errors.telephone}
               helperText={errors.telephone?.message || "Ex: 11999999999"}
+              autoComplete="tel"
             />
           </Box>
         </DialogContent>

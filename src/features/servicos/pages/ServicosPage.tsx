@@ -123,14 +123,29 @@ export default function ServicosPage() {
     <Box>
       <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />
       <FeedbackBanner message={success} severity="success" onClose={() => setSuccess("")} />
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h5" fontWeight={600}>
-          Gerenciar Serviços
-        </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: { xs: "flex-start", sm: "center" },
+          flexDirection: { xs: "column", sm: "row" },
+          gap: 2,
+          mb: 3
+        }}
+      >
+        <Box>
+          <Typography variant="h5" fontWeight={700}>
+            Gerenciar Serviços
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Crie, edite e organize seus serviços
+          </Typography>
+        </Box>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenForm()}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
         >
           Novo Serviço
         </Button>
@@ -141,9 +156,14 @@ export default function ServicosPage() {
           <CircularProgress />
         </Box>
       ) : services.length === 0 ? (
-        <Typography color="text.secondary" align="center" py={4}>
-          Nenhum serviço cadastrado
-        </Typography>
+        <Box sx={{ textAlign: "center", py: 4 }}>
+          <Typography color="text.secondary" sx={{ mb: 2 }}>
+            Nenhum serviço cadastrado
+          </Typography>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenForm()}>
+            Cadastrar primeiro serviço
+          </Button>
+        </Box>
       ) : (
         <Box sx={{ 
           display: "grid", 
