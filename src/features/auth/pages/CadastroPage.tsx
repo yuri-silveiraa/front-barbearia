@@ -38,6 +38,7 @@ export function CadastroPage() {
   } = useForm<RegisterData>({
     resolver: zodResolver(registerSchema)
   });
+  const nameValue = watch("name") ?? "";
   const telephoneValue = watch("telephone") ?? "";
 
   useEffect(() => {
@@ -108,6 +109,11 @@ export function CadastroPage() {
               fullWidth
               margin="normal"
               {...register("name")}
+              value={nameValue}
+              onChange={(event) => {
+                const sanitized = event.target.value.replace(/[0-9]/g, "");
+                setValue("name", sanitized, { shouldValidate: true });
+              }}
               error={!!errors.name}
               helperText={errors.name?.message}
               autoComplete="name"
@@ -188,6 +194,7 @@ export function CadastroPage() {
               helperText={errors.telephone?.message || "Ex: (11) 91234-5678"}
               autoComplete="tel"
               placeholder="(11) 91234-5678"
+              inputProps={{ inputMode: "numeric" }}
               size="medium"
             />
 

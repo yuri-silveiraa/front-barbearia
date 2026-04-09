@@ -26,7 +26,10 @@ import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import { formatName } from "../../../utils/formatName";
 
 const profileSchema = z.object({
-  name: z.string().trim().min(3, "Nome precisa ter no mínimo 3 caracteres"),
+  name: z.string()
+    .trim()
+    .min(3, "Nome precisa ter no mínimo 3 caracteres")
+    .regex(/^[\p{L}\s]+$/u, "Nome deve conter apenas letras"),
   email: z.string().email("Email inválido").trim(),
   telephone: z.string().trim().min(11, "Telefone inválido"),
 });

@@ -12,7 +12,10 @@ export const loginSchema = z.object({
 export type LoginData = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
-  name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+  name: z.string()
+    .trim()
+    .min(3, 'Nome deve ter no mínimo 3 caracteres')
+    .regex(/^[\p{L}\s]+$/u, 'Nome deve conter apenas letras'),
   email: z.string().email('Email inválido'),
   password: z.string()
     .min(8, 'Senha deve ter no mínimo 8 caracteres')
