@@ -21,8 +21,10 @@ export const registerSchema = z.object({
     .regex(/[0-9]/, 'Deve conter pelo menos um número'),
   confirmPassword: z.string(),
   telephone: z.string()
-    .min(11, 'Telefone deve ter 11 dígitos (ex: 11999999999)')
-    .regex(/^\d+$/, 'Telefone deve conter apenas números'),
+    .transform((value) => value.replace(/\D/g, ""))
+    .refine((value) => value.length === 11, {
+      message: "WhatsApp deve ter 11 dígitos (ex: 11999999999)"
+    }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"],

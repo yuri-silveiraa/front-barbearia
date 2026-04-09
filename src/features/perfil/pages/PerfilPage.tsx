@@ -23,6 +23,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import { useAuth } from "../../../contexts/AuthContext";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import { formatName } from "../../../utils/formatName";
 
 const profileSchema = z.object({
   name: z.string().trim().min(3, "Nome precisa ter no mínimo 3 caracteres"),
@@ -69,7 +70,7 @@ export function PerfilPage() {
     setSuccess(null);
     try {
       await updateUser({
-        name: data.name,
+        name: formatName(data.name),
         email: data.email,
         telephone: data.telephone,
       });

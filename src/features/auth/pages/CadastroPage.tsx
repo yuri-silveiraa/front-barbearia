@@ -17,6 +17,7 @@ import { registerSchema } from "../../../api/auth/schema";
 import { registerService } from "../../../api/auth/auth.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import { AuthLayout } from "../../../layouts/AuthLayout";
+import { formatName } from "../../../utils/formatName";
 import type { RegisterData } from "../../../api/auth/schema";
 
 export function CadastroPage() {
@@ -32,10 +33,12 @@ export function CadastroPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-    watch
+    watch,
+    setValue
   } = useForm<RegisterData>({
     resolver: zodResolver(registerSchema)
   });
+  const telephoneValue = watch("telephone") ?? "";
 
   useEffect(() => {
     const emailFromState = (location.state as { email?: string } | null)?.email;
@@ -63,7 +66,11 @@ export function CadastroPage() {
   async function onSubmit(data: RegisterData) {
     try {
       setError("");
-      await registerService(data);
+      await registerService({
+        ...data,
+        name: formatName(data.name),
+        telephone: data.telephone
+      });
       sessionStorage.removeItem(STORAGE_KEY);
       navigate("/verificar-email", { state: { email: data.email } });
     } catch (err: unknown) {
@@ -76,6 +83,14 @@ export function CadastroPage() {
       }
     }
   }
+
+  const formatWhatsapp = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    if (digits.length === 0) return "";
+    if (digits.length <= 2) return `(${digits}`;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
 
   return (
     <>
@@ -160,13 +175,19 @@ export function CadastroPage() {
             />
 
             <TextField
-              label="Telefone"
+              label="WhatsApp"
               fullWidth
               margin="normal"
               {...register("telephone")}
+              value={telephoneValue}
+              onChange={(event) => {
+                const masked = formatWhatsapp(event.target.value);
+                setValue("telephone", masked, { shouldValidate: true });
+              }}
               error={!!errors.telephone}
-              helperText={errors.telephone?.message || "Ex: 11999999999"}
+              helperText={errors.telephone?.message || "Ex: (11) 91234-5678"}
               autoComplete="tel"
+              placeholder="(11) 91234-5678"
               size="medium"
             />
 
