@@ -16,4 +16,4 @@ jobs:
           cd "$BASE_DIR/backend-barbearia-reservas" && git pull
           cd "$BASE_DIR/front-barbearia" && git pull
           cd "$BASE_DIR/backend-barbearia-reservas"
-          docker compose -f docker-compose.deploy.yml up -d --build --no-deps backend
+          docker compose -f docker-compose.deploy.yml up -d --build --no-deps frontend
