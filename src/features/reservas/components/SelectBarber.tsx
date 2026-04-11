@@ -1,13 +1,7 @@
 import { type FC } from "react";
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-  Typography,
-  Avatar
-} from "@mui/material";
+import { Avatar, Box, Paper, Typography } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PersonIcon from "@mui/icons-material/Person";
 import type { Barber } from "../../../api/reservas/types";
 
 interface SelectBarberProps {
@@ -25,92 +19,94 @@ const SelectBarber: FC<SelectBarberProps> = ({
   loading,
   error,
 }) => {
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string) =>
+    name
       .split(" ")
-      .map((n) => n[0])
+      .map((part) => part[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
-  };
 
-  return (
-    <FormControl fullWidth error={!!error} size="small">
-      <InputLabel id="barber-select-label">Selecione o barbeiro</InputLabel>
-      <Select
-        labelId="barber-select-label"
-        value={value}
-        onChange={(e) => onChange(e.target.value as string)}
-        label="Selecione o barbeiro"
-        disabled={loading || barbers.length === 0}
-        renderValue={(selected) => {
-          if (!selected) return "Selecione o barbeiro";
-          const barber = barbers.find(b => b.id === selected);
-          if (!barber) return selected;
-          return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Avatar
-                sx={{
-                  width: 32,
-                  height: 32,
-                  fontSize: "0.875rem",
-                  bgcolor: "primary.main"
-                }}
-              >
-                {getInitials(barber.name)}
-              </Avatar>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {barber.name}
-              </Typography>
-            </Box>
-          );
-        }}
+  if (!loading && barbers.length === 0) {
+    return (
+      <Paper
+        elevation={0}
         sx={{
-          "& .MuiSelect-select": {
-            py: 1.5
-          }
+          p: 3,
+          borderRadius: 2,
+          border: "1px dashed",
+          borderColor: "divider",
+          textAlign: "center",
         }}
       >
-        {barbers.map((b) => (
-          <MenuItem 
-            key={b.id} 
-            value={String(b.id)}
-            sx={{
-              py: 1.5,
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5
-            }}
-          >
-            <Avatar
+        <PersonIcon sx={{ color: "text.disabled", mb: 1 }} />
+        <Typography color="text.secondary">Nenhum barbeiro disponível.</Typography>
+      </Paper>
+    );
+  }
+
+  return (
+    <Box>
+      <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 0.5 }}>
+        Escolha o barbeiro
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Toque no profissional para continuar montando seu horário.
+      </Typography>
+
+      <Box sx={{ display: "grid", gap: 1.25 }}>
+        {barbers.map((barber) => {
+          const selected = value === barber.id;
+
+          return (
+            <Paper
+              key={barber.id}
+              component="button"
+              type="button"
+              elevation={0}
+              disabled={loading}
+              onClick={() => onChange(barber.id)}
               sx={{
-                width: 36,
-                height: 36,
-                fontSize: "0.875rem",
-                bgcolor: "primary.light"
+                width: "100%",
+                p: 1.5,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: selected ? "primary.main" : "divider",
+                bgcolor: selected ? "rgba(0, 191, 165, 0.08)" : "background.paper",
+                color: "inherit",
+                cursor: loading ? "default" : "pointer",
+                display: "grid",
+                gridTemplateColumns: "44px minmax(0, 1fr) auto",
+                gap: 1.5,
+                alignItems: "center",
+                textAlign: "left",
+                transition: "background-color 0.2s ease, border-color 0.2s ease",
+                "&:hover": loading ? undefined : { borderColor: "primary.main" },
               }}
             >
-              {getInitials(b.name)}
-            </Avatar>
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {b.name}
-              </Typography>
-              {b.specialties && b.specialties.length > 0 && (
-                <Typography variant="caption" color="text.secondary">
-                  {b.specialties.join(", ")}
+              <Avatar sx={{ width: 44, height: 44, bgcolor: selected ? "primary.main" : "action.hover" }}>
+                {getInitials(barber.name)}
+              </Avatar>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography fontWeight={800} noWrap>
+                  {barber.name}
                 </Typography>
-              )}
-            </Box>
-          </MenuItem>
-        ))}
-      </Select>
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  {barber.specialties?.length ? barber.specialties.join(", ") : "Barbeiro"}
+                </Typography>
+              </Box>
+              {selected && <CheckCircleIcon color="primary" />}
+            </Paper>
+          );
+        })}
+      </Box>
+
       {error && (
-        <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+        <Typography variant="caption" color="error" sx={{ mt: 1, display: "block" }}>
           {error}
         </Typography>
       )}
-    </FormControl>
+    </Box>
   );
 };
 

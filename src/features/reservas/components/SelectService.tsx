@@ -1,12 +1,6 @@
 import { type FC } from "react";
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-  Typography
-} from "@mui/material";
+import { Box, Paper, Typography } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import type { Service } from "../../../api/reservas/types";
 
@@ -18,6 +12,11 @@ interface SelectServiceProps {
   error?: string;
 }
 
+const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+
 const SelectService: FC<SelectServiceProps> = ({
   services,
   value,
@@ -25,79 +24,96 @@ const SelectService: FC<SelectServiceProps> = ({
   loading,
   error,
 }) => {
-  const currencyFormatter = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-
-  return (
-    <FormControl fullWidth error={!!error} size="small">
-      <InputLabel id="service-select-label">Selecione o serviço</InputLabel>
-      <Select
-        labelId="service-select-label"
-        value={value}
-        onChange={(e) => onChange(e.target.value as string)}
-        label="Selecione o serviço"
-        disabled={loading || services.length === 0}
-        renderValue={(selected) => {
-          if (!selected) return "Selecione o serviço";
-          const service = services.find(s => s.id === selected);
-          if (!service) return selected;
-          return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <ContentCutIcon fontSize="small" color="primary" />
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {service.name}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {currencyFormatter.format(service.price)}
-                </Typography>
-              </Box>
-            </Box>
-          );
-        }}
+  if (!loading && services.length === 0) {
+    return (
+      <Paper
+        elevation={0}
         sx={{
-          "& .MuiSelect-select": {
-            py: 1.5
-          }
+          p: 3,
+          borderRadius: 2,
+          border: "1px dashed",
+          borderColor: "divider",
+          textAlign: "center",
         }}
       >
-        {services.map((s) => (
-          <MenuItem 
-            key={s.id} 
-            value={String(s.id)}
-            sx={{
-              py: 1.5,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              gap: 0.5
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
-              <ContentCutIcon fontSize="small" color="primary" />
-              <Typography variant="body2" sx={{ fontWeight: 500, flex: 1 }}>
-                {s.name}
-              </Typography>
-              <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
-                {currencyFormatter.format(s.price)}
-              </Typography>
-            </Box>
-            {s.description && (
-              <Typography variant="caption" color="text.secondary" sx={{ ml: 4 }}>
-                {s.description}
-              </Typography>
-            )}
-          </MenuItem>
-        ))}
-      </Select>
+        <ContentCutIcon sx={{ color: "text.disabled", mb: 1 }} />
+        <Typography color="text.secondary">Nenhum serviço disponível.</Typography>
+      </Paper>
+    );
+  }
+
+  return (
+    <Box>
+      <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 0.5 }}>
+        Escolha o serviço
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        O preço fica destacado para você confirmar antes do horário.
+      </Typography>
+
+      <Box sx={{ display: "grid", gap: 1.25 }}>
+        {services.map((service) => {
+          const selected = value === service.id;
+
+          return (
+            <Paper
+              key={service.id}
+              component="button"
+              type="button"
+              elevation={0}
+              disabled={loading}
+              onClick={() => onChange(service.id)}
+              sx={{
+                width: "100%",
+                p: 1.5,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: selected ? "primary.main" : "divider",
+                bgcolor: selected ? "rgba(0, 191, 165, 0.08)" : "background.paper",
+                color: "inherit",
+                cursor: loading ? "default" : "pointer",
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 1fr) auto",
+                gap: 1.5,
+                alignItems: "center",
+                textAlign: "left",
+                transition: "background-color 0.2s ease, border-color 0.2s ease",
+                "&:hover": loading ? undefined : { borderColor: "primary.main" },
+              }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.5 }}>
+                  <ContentCutIcon color="primary" fontSize="small" />
+                  <Typography fontWeight={800} noWrap>
+                    {service.name}
+                  </Typography>
+                </Box>
+                {service.description && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.75 }}>
+                    {service.description}
+                  </Typography>
+                )}
+                <Typography variant="caption" color="text.secondary">
+                  {service.duration > 0 ? `${service.duration} min` : "Duração sob consulta"}
+                </Typography>
+              </Box>
+              <Box sx={{ display: "grid", justifyItems: "end", gap: 0.75 }}>
+                <Typography fontWeight={900} color="primary.main">
+                  {currencyFormatter.format(service.price)}
+                </Typography>
+                {selected && <CheckCircleIcon color="primary" />}
+              </Box>
+            </Paper>
+          );
+        })}
+      </Box>
+
       {error && (
-        <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+        <Typography variant="caption" color="error" sx={{ mt: 1, display: "block" }}>
           {error}
         </Typography>
       )}
-    </FormControl>
+    </Box>
   );
 };
 
