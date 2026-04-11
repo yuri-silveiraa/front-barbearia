@@ -16,15 +16,17 @@ export interface TimeSlot {
   disponible: boolean;
 }
 
-export interface BarberPayment {
+export interface BarberRevenueAppointment {
   id: string;
+  serviceId: string;
+  service: string;
   amount: number;
-  createdAt: string;
+  completedAt: string;
 }
 
 export interface BarberFinanceResponse {
-  balance: number;
-  payments: BarberPayment[];
+  totalRevenue: number;
+  appointments: BarberRevenueAppointment[];
   services?: Array<{
     serviceId: string;
     service: string;

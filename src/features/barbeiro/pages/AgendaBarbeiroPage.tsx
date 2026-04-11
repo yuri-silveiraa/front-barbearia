@@ -89,7 +89,7 @@ export default function AgendaBarbeiroPage() {
         getBarberFinanceByRange(today, today),
         getServices().catch(() => []),
       ]);
-      const payments = financeData.payments || [];
+      const revenueAppointments = financeData.appointments || [];
       setAppointments(appointmentsData || []);
       setServicePrices(
         servicesData.reduce<Record<string, number>>((prices, service) => {
@@ -98,8 +98,8 @@ export default function AgendaBarbeiroPage() {
           return prices;
         }, {})
       );
-      setDailyPaymentsCount(payments.length);
-      setDailyRevenue(payments.reduce((total, payment) => total + payment.amount, 0));
+      setDailyPaymentsCount(revenueAppointments.length);
+      setDailyRevenue(revenueAppointments.reduce((total, appointment) => total + appointment.amount, 0));
     } catch (err: unknown) {
       const errorMessage = err && typeof err === "object" && "message" in err
         ? (err as { message: string }).message

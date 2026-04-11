@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
-import PaidIcon from "@mui/icons-material/Paid";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Navigate } from "react-router-dom";
@@ -19,7 +19,7 @@ import dayjs from "dayjs";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getBarberFinanceByRange } from "../../../api/barbeiro/barbeiro.service";
-import type { BarberPayment } from "../../../api/barbeiro/types";
+import type { BarberRevenueAppointment } from "../../../api/barbeiro/types";
 import { FinanceChart } from "../components/FinanceChart";
 
 function formatCurrency(value: number) {
@@ -51,8 +51,8 @@ export default function FinanceiroPage() {
     start: dayjs().subtract(30, "day").format("YYYY-MM-DD"),
     end: dayjs().format("YYYY-MM-DD"),
   });
-  const [payments, setPayments] = useState<BarberPayment[]>([]);
-  const [balance, setBalance] = useState(0);
+  const [appointments, setAppointments] = useState<BarberRevenueAppointment[]>([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [services, setServices] = useState<Array<{ serviceId: string; service: string; count: number; total: number }>>([]);
@@ -62,8 +62,9 @@ export default function FinanceiroPage() {
       setLoading(true);
       setError("");
       const data = await getBarberFinanceByRange(appliedRange.start, appliedRange.end);
-      setPayments(data.payments || []);
-      setBalance(data.balance || 0);
+      const revenueAppointments = data.appointments || [];
+      setAppointments(revenueAppointments);
+      setTotalRevenue(data.totalRevenue ?? revenueAppointments.reduce((acc, item) => acc + item.amount, 0));
       setServices(data.services || []);
     } catch {
       setError("Erro ao carregar financeiro");
@@ -80,14 +81,9 @@ export default function FinanceiroPage() {
     setAppliedRange({ start, end });
   };
 
-  const totalPeriod = useMemo(
-    () => payments.reduce((acc, item) => acc + item.amount, 0),
-    [payments]
-  );
-
   const averageTicket = useMemo(
-    () => payments.length > 0 ? totalPeriod / payments.length : 0,
-    [payments.length, totalPeriod]
+    () => appointments.length > 0 ? totalRevenue / appointments.length : 0,
+    [appointments.length, totalRevenue]
   );
 
   const bestService = useMemo(
@@ -97,17 +93,17 @@ export default function FinanceiroPage() {
 
   const chartData = useMemo(() => {
     const map = new Map<string, number>();
-    payments.forEach((p) => {
-      const key = formatDate(p.createdAt);
-      map.set(key, (map.get(key) ?? 0) + p.amount);
+    appointments.forEach((appointment) => {
+      const key = formatDate(appointment.completedAt);
+      map.set(key, (map.get(key) ?? 0) + appointment.amount);
     });
     return Array.from(map.entries()).map(([date, total]) => ({ date, total }));
-  }, [payments]);
+  }, [appointments]);
 
   const periodLabel = `${formatDate(appliedRange.start)} - ${formatDate(appliedRange.end)}`;
-  const orderedPayments = useMemo(
-    () => [...payments].sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()),
-    [payments]
+  const orderedAppointments = useMemo(
+    () => [...appointments].sort((a, b) => dayjs(b.completedAt).valueOf() - dayjs(a.completedAt).valueOf()),
+    [appointments]
   );
 
   if (!isBarber) {
@@ -134,7 +130,7 @@ export default function FinanceiroPage() {
           Faturamento
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Acompanhe pagamentos, serviços vendidos e receita do período.
+          Acompanhe o faturamento real com base nos agendamentos concluídos.
         </Typography>
       </Box>
 
@@ -200,28 +196,28 @@ export default function FinanceiroPage() {
           >
             {[
               {
-                label: "Saldo atual",
-                value: formatCurrency(balance),
-                helper: "Disponível para o barbeiro",
-                icon: <PaidIcon />,
+                label: "Faturamento total",
+                value: formatCurrency(totalRevenue),
+                helper: periodLabel,
+                icon: <TrendingUpIcon />,
                 featured: true,
               },
               {
-                label: "Receita",
-                value: formatCurrency(totalPeriod),
-                helper: periodLabel,
-                icon: <TrendingUpIcon />,
+                label: "Atendimentos",
+                value: String(appointments.length),
+                helper: "Concluídos no período",
+                icon: <EventAvailableIcon />,
               },
               {
-                label: "Transações",
-                value: String(payments.length),
-                helper: "Pagamentos recebidos",
+                label: "Serviços",
+                value: String(services.length),
+                helper: "Tipos vendidos",
                 icon: <ReceiptLongIcon />,
               },
               {
                 label: "Ticket médio",
                 value: formatCurrency(averageTicket),
-                helper: "Por pagamento",
+                helper: "Por atendimento",
                 icon: <ContentCutIcon />,
               },
             ].map((item) => (
@@ -297,20 +293,20 @@ export default function FinanceiroPage() {
                     Serviços
                   </Typography>
                   <Typography variant="subtitle1" fontWeight={700}>
-                    Mais vendidos
+                    Mais faturados
                   </Typography>
                 </Box>
                 {bestService && <Chip label={bestService.service} size="small" color="primary" variant="outlined" />}
               </Box>
 
               {services.length === 0 ? (
-                <Typography color="text.secondary">Nenhum serviço no período.</Typography>
+                <Typography color="text.secondary">Nenhum serviço concluído no período.</Typography>
               ) : (
                 <Stack spacing={1.5}>
                   {[...services]
                     .sort((a, b) => b.total - a.total)
                     .map((item) => {
-                      const share = totalPeriod > 0 ? Math.round((item.total / totalPeriod) * 100) : 0;
+                      const share = totalRevenue > 0 ? Math.round((item.total / totalRevenue) * 100) : 0;
                       return (
                         <Box key={item.serviceId}>
                           <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2, mb: 0.75 }}>
@@ -319,7 +315,7 @@ export default function FinanceiroPage() {
                                 {item.service}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
-                                {item.count} {item.count === 1 ? "venda" : "vendas"}
+                                {item.count} {item.count === 1 ? "atendimento" : "atendimentos"}
                               </Typography>
                             </Box>
                             <Box sx={{ textAlign: "right", flexShrink: 0 }}>
@@ -362,19 +358,19 @@ export default function FinanceiroPage() {
                     Histórico
                   </Typography>
                   <Typography variant="subtitle1" fontWeight={700}>
-                    Transações
+                    Atendimentos concluídos
                   </Typography>
                 </Box>
                 <Chip label={periodLabel} size="small" variant="outlined" />
               </Box>
 
-              {orderedPayments.length === 0 ? (
-                <Typography color="text.secondary">Nenhuma transação no período.</Typography>
+              {orderedAppointments.length === 0 ? (
+                <Typography color="text.secondary">Nenhum atendimento concluído no período.</Typography>
               ) : (
                 <Stack divider={<Divider flexItem />} spacing={1.25}>
-                  {orderedPayments.map((payment) => (
+                  {orderedAppointments.map((appointment) => (
                     <Box
-                      key={payment.id}
+                      key={appointment.id}
                       sx={{
                         display: "flex",
                         alignItems: "center",
@@ -383,13 +379,15 @@ export default function FinanceiroPage() {
                       }}
                     >
                       <Box sx={{ minWidth: 0 }}>
-                        <Typography fontWeight={700}>Pagamento recebido</Typography>
+                        <Typography fontWeight={700} noWrap>
+                          {appointment.service || "Atendimento concluído"}
+                        </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {formatDateTime(payment.createdAt)}
+                          {formatDateTime(appointment.completedAt)}
                         </Typography>
                       </Box>
                       <Typography fontWeight={800} color="primary.main" sx={{ flexShrink: 0 }}>
-                        {formatCurrency(payment.amount)}
+                        {formatCurrency(appointment.amount)}
                       </Typography>
                     </Box>
                   ))}

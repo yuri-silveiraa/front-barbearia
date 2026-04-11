@@ -15,7 +15,7 @@ export async function getBarberAppointmentsByRange(start: string, end: string): 
 
 export async function getBarberFinanceByRange(start: string, end: string): Promise<BarberFinanceResponse> {
   const { data } = await api.get<BarberFinanceResponse>(
-    `/barber/payments?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
+    `/barber/revenue?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
   );
   return data;
 }
