@@ -14,6 +14,7 @@ export interface Service {
   price: number;
   duration: number;
   category?: string;
+  imagemUrl?: string | null;
 }
 
 export interface TimeSlot {

@@ -1,7 +1,4 @@
 import { useEffect, useState, useRef } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -31,14 +28,6 @@ import SelectBarber from "../components/SelectBarber";
 import SelectService from "../components/SelectService";
 import type { Barber, Service, TimeSlot } from "../../../api/reservas/types";
 
-const reservaSchema = z.object({
-  barberId: z.string().min(1, "Selecione um barbeiro"),
-  serviceId: z.string().min(1, "Selecione um serviço"),
-  timeId: z.string().min(1, "Selecione um horário"),
-});
-
-type ReservaForm = z.infer<typeof reservaSchema>;
-
 const steps = [
   { label: "Barbeiro", icon: <PersonIcon /> },
   { label: "Serviço", icon: <ContentCutIcon /> },
@@ -53,34 +42,21 @@ export default function CriarReservaPage() {
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [times, setTimes] = useState<TimeSlot[]>([]);
-  const [currentBarberId, setCurrentBarberId] = useState<string>("");
+  const [selectedBarberId, setSelectedBarberId] = useState("");
+  const [selectedServiceId, setSelectedServiceId] = useState("");
+  const [selectedTimeId, setSelectedTimeId] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState({
+    barberId: "",
+    serviceId: "",
+    timeId: "",
+  });
   const [activeStep, setActiveStep] = useState(0);
   const hasFetched = useRef(false);
-
-  const {
-    control,
-    formState: { errors, isSubmitting },
-    watch,
-    getValues,
-    reset,
-    setValue,
-    trigger
-  } = useForm<ReservaForm>({
-    resolver: zodResolver(reservaSchema),
-    defaultValues: { barberId: "", serviceId: "", timeId: "" },
-  });
-
-  const selectedBarberId = watch("barberId");
-  
-  useEffect(() => {
-    if (selectedBarberId) {
-      setCurrentBarberId(selectedBarberId);
-    }
-  }, [selectedBarberId]);
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -89,23 +65,29 @@ export default function CriarReservaPage() {
   }, []);
 
   useEffect(() => {
-    setValue("timeId", "");
-    if (currentBarberId) {
-      loadTimes(currentBarberId);
+    setSelectedTimeId("");
+    setFieldErrors((prev) => ({ ...prev, timeId: "" }));
+
+    if (selectedBarberId) {
+      loadTimes(selectedBarberId);
     } else {
       setTimes([]);
     }
-  }, [currentBarberId, setValue]);
+  }, [selectedBarberId]);
 
-  const handleNext = async () => {
-    let fieldToCheck = "";
-    if (activeStep === 0) fieldToCheck = "barberId";
-    else if (activeStep === 1) fieldToCheck = "serviceId";
-
-    const isValid = await trigger(fieldToCheck as keyof ReservaForm);
-    if (isValid) {
-      setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
+  const handleNext = () => {
+    if (activeStep === 0 && !selectedBarberId) {
+      setFieldErrors((prev) => ({ ...prev, barberId: "Selecione um barbeiro" }));
+      return;
     }
+
+    if (activeStep === 1 && !selectedServiceId) {
+      setFieldErrors((prev) => ({ ...prev, serviceId: "Selecione um serviço" }));
+      return;
+    }
+
+    setError(null);
+    setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
   };
 
   const handleBack = () => {
@@ -168,12 +150,14 @@ export default function CriarReservaPage() {
         serviceId,
         timeId,
       });
-      setSuccessMessage("Reserva criada com sucesso!");
-      reset();
+      setSuccessMessage("Agendamento criado com sucesso!");
+      setSelectedBarberId("");
+      setSelectedServiceId("");
+      setSelectedTimeId("");
       setTimeout(() => navigate("/reservas"), 2000);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Verifique os dados";
-      setError("Erro ao criar reserva: " + errorMessage);
+      setError("Erro ao criar agendamento: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -183,54 +167,41 @@ export default function CriarReservaPage() {
     switch (activeStep) {
       case 0:
         return (
-          <Controller
-            name="barberId"
-            control={control}
-            render={({ field }) => (
-              <SelectBarber
-                barbers={barbers}
-                value={field.value}
-                onChange={(val) => {
-                  field.onChange(val);
-                }}
-                loading={loading}
-                error={errors.barberId?.message}
-              />
-            )}
+          <SelectBarber
+            barbers={barbers}
+            value={selectedBarberId}
+            onChange={(val) => {
+              setSelectedBarberId(val);
+              setFieldErrors((prev) => ({ ...prev, barberId: "" }));
+            }}
+            loading={loading}
+            error={fieldErrors.barberId}
           />
         );
       case 1:
         return (
-          <Controller
-            name="serviceId"
-            control={control}
-            render={({ field }) => (
-              <SelectService
-                services={services}
-                value={field.value}
-                onChange={(val) => {
-                  field.onChange(val);
-                }}
-                loading={loading}
-                error={errors.serviceId?.message}
-              />
-            )}
+          <SelectService
+            services={services}
+            value={selectedServiceId}
+            onChange={(val) => {
+              setSelectedServiceId(val);
+              setFieldErrors((prev) => ({ ...prev, serviceId: "" }));
+            }}
+            loading={loading}
+            error={fieldErrors.serviceId}
           />
         );
         case 2:
         return (
-          <Controller
-            name="timeId"
-            control={control}
-            render={({ field }) => (
-              <CalendarTimePicker
-                times={times}
-                value={field.value}
-                onChange={field.onChange}
-                loading={loading}
-                error={errors.timeId?.message}
-              />
-            )}
+          <CalendarTimePicker
+            times={times}
+            value={selectedTimeId}
+            onChange={(val) => {
+              setSelectedTimeId(val);
+              setFieldErrors((prev) => ({ ...prev, timeId: "" }));
+            }}
+            loading={loading}
+            error={fieldErrors.timeId}
           />
         );
       default:
@@ -243,10 +214,10 @@ export default function CriarReservaPage() {
       <FeedbackBanner message={error} severity="error" onClose={() => setError(null)} />
       <FeedbackBanner message={successMessage} severity="success" onClose={() => setSuccessMessage(null)} />
       <Typography variant="h5" sx={{ mb: 0.5, fontWeight: 700, textAlign: "center" }}>
-        Nova Reserva
+        Novo agendamento
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2, textAlign: "center" }}>
-        Escolha o barbeiro, serviço e horário
+        Faça seu agendamento escolhendo barbeiro, serviço e horário
       </Typography>
 
       <Paper
@@ -334,21 +305,28 @@ export default function CriarReservaPage() {
               <Button
                 size="small"
                 onClick={async () => {
-                  const { barberId, serviceId, timeId } = getValues();
-                  const isTimeValid = await trigger("timeId");
-
-                  if (!barberId || !serviceId || !timeId || !isTimeValid) {
+                  if (!selectedBarberId || !selectedServiceId || !selectedTimeId) {
+                    setFieldErrors({
+                      barberId: selectedBarberId ? "" : "Selecione um barbeiro",
+                      serviceId: selectedServiceId ? "" : "Selecione um serviço",
+                      timeId: selectedTimeId ? "" : "Selecione um horário",
+                    });
                     setError("Selecione o barbeiro, serviço e horário");
                     return;
                   }
 
                   setError(null);
-                  await onSubmit(barberId, serviceId, timeId);
+                  try {
+                    setSubmitting(true);
+                    await onSubmit(selectedBarberId, selectedServiceId, selectedTimeId);
+                  } finally {
+                    setSubmitting(false);
+                  }
                 }}
-                disabled={isSubmitting || loading}
+                disabled={submitting || loading}
                 variant="contained"
               >
-                {isSubmitting ? "Criando..." : "Confirmar"}
+                {submitting ? "Criando..." : "Confirmar"}
               </Button>
             )
           }

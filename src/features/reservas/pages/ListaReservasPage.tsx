@@ -71,10 +71,10 @@ export function ListaReservasPage() {
     setSuccess(null);
     try {
       await cancelarReserva(reservaToCancel.id);
-      setSuccess("Reserva cancelada com sucesso.");
+      setSuccess("Agendamento cancelado com sucesso.");
       await carregar();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao cancelar reserva";
+      const message = err instanceof Error ? err.message : "Erro ao cancelar agendamento";
       setError(message);
     } finally {
       setCanceling(false);
@@ -120,10 +120,10 @@ export function ListaReservasPage() {
       }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 700 }}>
-            Minhas Reservas
+            Meus agendamentos
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Gerencie seus agendamentos
+            Acompanhe seus horários marcados
           </Typography>
         </Box>
 
@@ -133,7 +133,7 @@ export function ListaReservasPage() {
           onClick={() => navigate("/reservas/create")}
           sx={{ px: { xs: 2, sm: 3 }, py: 1, fontWeight: 600, width: { xs: "100%", sm: "auto" } }}
         >
-          Nova Reserva
+          Novo agendamento
         </Button>
       </Box>
 
@@ -165,17 +165,17 @@ export function ListaReservasPage() {
             <ScheduleIcon sx={{ fontSize: { xs: 30, sm: 40 }, color: "text.secondary" }} />
           </Box>
           <Typography variant="h6" sx={{ mb: 1 }}>
-            Nenhuma reserva ainda
+            Nenhum agendamento ainda
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Agende seu primeiro atendimento na barbearia
+            Marque seu primeiro atendimento na barbearia
           </Typography>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => navigate("/reservas/create")}
           >
-            Criar Reserva
+            Criar agendamento
           </Button>
         </Paper>
       ) : (
@@ -250,7 +250,7 @@ export function ListaReservasPage() {
                       variant="outlined"
                       onClick={() => handleOpenCancel(reserva)}
                     >
-                      Cancelar reserva
+                      Cancelar agendamento
                     </Button>
                   </Box>
                 )}
@@ -261,10 +261,10 @@ export function ListaReservasPage() {
       )}
 
       <Dialog open={cancelDialogOpen} onClose={() => !canceling && setCancelDialogOpen(false)}>
-        <DialogTitle>Cancelar reserva</DialogTitle>
+        <DialogTitle>Cancelar agendamento</DialogTitle>
         <DialogContent>
           <Typography>
-            Tem certeza que deseja cancelar a reserva de{" "}
+            Tem certeza que deseja cancelar o agendamento de{" "}
             <strong>{reservaToCancel?.service}</strong>?
           </Typography>
         </DialogContent>

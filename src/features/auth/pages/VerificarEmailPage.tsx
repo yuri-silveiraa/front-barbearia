@@ -44,7 +44,7 @@ export default function VerificarEmailPage() {
         if (user.type === "BARBER") {
           navigate("/agenda");
         } else {
-          navigate("/reservas");
+          navigate("/home");
         }
       }, 800);
     } catch (err: unknown) {

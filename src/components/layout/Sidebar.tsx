@@ -14,6 +14,7 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import GroupIcon from "@mui/icons-material/Group";
 import PaidIcon from "@mui/icons-material/Paid";
+import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate, useLocation } from "react-router-dom";
 import type { User } from "../../features/auth/types";
 
@@ -24,6 +25,11 @@ interface SidebarProps {
 }
 
 const clientMenuItems = [
+  {
+    label: "Home",
+    icon: <HomeIcon />,
+    path: "/home"
+  },
   {
     label: "Reservas",
     icon: <CalendarMonthIcon />,

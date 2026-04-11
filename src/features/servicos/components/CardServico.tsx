@@ -30,6 +30,21 @@ export function CardServico({
   return (
     <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <CardContent sx={{ flexGrow: 1 }}>
+        {service.imagemUrl && (
+          <Box
+            sx={{
+              width: "100%",
+              height: 140,
+              borderRadius: 2,
+              mb: 2,
+              backgroundImage: `url(${service.imagemUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              border: "1px solid",
+              borderColor: "divider",
+            }}
+          />
+        )}
         <Box display="flex" justifyContent="space-between" alignItems="start">
           <Box flex={1}>
             <Typography variant="h6" gutterBottom>

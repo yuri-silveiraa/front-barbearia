@@ -14,6 +14,7 @@ import ServicosPage from "../features/servicos/pages/ServicosPage";
 import AgendaBarbeiroPeriodoPage from "../features/barbeiro/pages/AgendaBarbeiroPeriodoPage";
 import BarbeirosPage from "../features/barbeiros/pages/BarbeirosPage";
 import FinanceiroPage from "../features/financeiro/pages/FinanceiroPage";
+import HomeClientePage from "../features/home/pages/HomeClientePage";
 
 export default function AppRoutes() {
   return (
@@ -32,6 +33,7 @@ export default function AppRoutes() {
           }
         >
           <Route index element={<IndexRedirect />} />
+          <Route path="home" element={<HomeClientePage />} />
           <Route path="reservas" element={<ListaReservasPage />} />
           <Route path="reservas/create" element={<CriarReservaPage />} />
           <Route path="perfil" element={<PerfilPage />} />
@@ -44,7 +46,7 @@ export default function AppRoutes() {
           <Route path="financeiro" element={<FinanceiroPage />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/reservas" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

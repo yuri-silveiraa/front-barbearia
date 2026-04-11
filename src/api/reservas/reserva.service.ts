@@ -138,6 +138,7 @@ function normalizeService(raw: UnknownRecord): Service {
     "descrição",
     "details",
   ]);
+  const imagemUrl = readOptionalString(raw, ["imageUrl", "imagemUrl", "imagem_url"]);
 
   return {
     id: readString(raw, ["id", "_id", "uuid", "serviceId"]),
@@ -146,6 +147,7 @@ function normalizeService(raw: UnknownRecord): Service {
     price: readNumber(raw, ["price", "preco", "preço", "valor", "amount"]),
     duration: readNumber(raw, ["duration", "duracao", "minutes"], 0),
     category: readOptionalString(raw, ["category", "categoria"]),
+    imagemUrl: imagemUrl ?? null,
   };
 }
 

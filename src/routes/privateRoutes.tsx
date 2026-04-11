@@ -27,5 +27,5 @@ export function IndexRedirect() {
     return <Navigate to="/agenda" replace />;
   }
   
-  return <Navigate to="/reservas" replace />;
+  return <Navigate to="/home" replace />;
 }

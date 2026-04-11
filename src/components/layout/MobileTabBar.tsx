@@ -17,6 +17,7 @@ import ContentCutIcon from "@mui/icons-material/ContentCut";
 import GroupIcon from "@mui/icons-material/Group";
 import PaidIcon from "@mui/icons-material/Paid";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import HomeIcon from "@mui/icons-material/Home";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { User } from "../../features/auth/types";
 
@@ -25,6 +26,7 @@ interface MobileTabBarProps {
 }
 
 const clientItems = [
+  { label: "Home", path: "/home", icon: <HomeIcon /> },
   { label: "Reservas", path: "/reservas", icon: <CalendarMonthIcon /> },
   { label: "Perfil", path: "/perfil", icon: <PersonIcon /> },
 ];

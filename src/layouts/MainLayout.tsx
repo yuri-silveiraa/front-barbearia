@@ -9,7 +9,7 @@ export function MainLayout() {
   const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const headerHeight = { xs: "56px", sm: "64px" };
+  const headerOffset = { xs: "calc(56px + 16px)", sm: "calc(64px + 24px)" };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
@@ -31,7 +31,7 @@ export function MainLayout() {
         sx={{
           flexGrow: 1,
           p: { xs: 1.5, sm: 3 },
-          pt: headerHeight,
+          pt: headerOffset,
           pb: { xs: 10, md: 3 },
           ml: 0,
           width: "100%",

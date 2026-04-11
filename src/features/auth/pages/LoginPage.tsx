@@ -41,7 +41,7 @@ export function LoginPage() {
     if (user.type === "BARBER") {
       navigate(user.isAdmin ? "/servicos" : "/agenda", { replace: true });
     } else {
-      navigate("/reservas", { replace: true });
+      navigate("/home", { replace: true });
     }
   }, [loadingAuth, user, navigate]);
 
@@ -53,7 +53,7 @@ export function LoginPage() {
       if (result?.type === "BARBER") {
         navigate("/agenda", { replace: true });
       } else {
-        navigate("/reservas", { replace: true });
+        navigate("/home", { replace: true });
       }
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
@@ -77,7 +77,7 @@ export function LoginPage() {
       if (result.type === "BARBER") {
         navigate("/agenda", { replace: true });
       } else {
-        navigate("/reservas", { replace: true });
+        navigate("/home", { replace: true });
       }
     } catch (err) {
       if (err instanceof Error) {

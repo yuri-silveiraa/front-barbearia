@@ -77,6 +77,8 @@ export default function ServicosPage() {
       nome: data.nome,
       descrição: data.descrição,
       preço: Number(data.preço),
+      imagemArquivo: data.imagemArquivo,
+      removerImagem: data.removerImagem,
     };
 
     try {
