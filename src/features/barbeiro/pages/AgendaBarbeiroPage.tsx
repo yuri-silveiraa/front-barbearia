@@ -1,28 +1,38 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Box,
-  Typography,
-  Paper,
-  CircularProgress,
-  Card,
-  CardContent,
+  Button,
   Chip,
+  CircularProgress,
+  Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   IconButton,
+  Paper,
+  Stack,
+  Typography,
   useMediaQuery,
-  useTheme
+  useTheme,
 } from "@mui/material";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import PersonIcon from "@mui/icons-material/Person";
-import ContentCutIcon from "@mui/icons-material/ContentCut";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { getBarberTodayAppointments } from "../../../api/barbeiro/barbeiro.service";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import ContentCutIcon from "@mui/icons-material/ContentCut";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import EventBusyIcon from "@mui/icons-material/EventBusy";
+import PaidIcon from "@mui/icons-material/Paid";
+import PersonIcon from "@mui/icons-material/Person";
+import { getServices } from "../../../api/servicos/servico.service";
+import { getBarberFinanceByRange, getBarberTodayAppointments } from "../../../api/barbeiro/barbeiro.service";
+import { attendAppointment, cancelAppointment } from "../../../api/barbeiro/barbeiro.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import type { BarberAppointment } from "../../../api/barbeiro/types";
 
-const statusColors: Record<string, "default" | "success" | "error"> = {
-  SCHEDULED: "default",
+const statusColors: Record<string, "primary" | "success" | "error"> = {
+  SCHEDULED: "primary",
   COMPLETED: "success",
   CANCELED: "error",
 };
@@ -33,153 +43,551 @@ const statusLabels: Record<string, string> = {
   CANCELED: "Cancelado",
 };
 
+function formatTime(timeStr: string) {
+  try {
+    const date = new Date(timeStr);
+    return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return timeStr;
+  }
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+}
+
+function formatDateForApi(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function AgendaBarbeiroPage() {
-  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<BarberAppointment[]>([]);
+  const [servicePrices, setServicePrices] = useState<Record<string, number>>({});
+  const [selectedAppointment, setSelectedAppointment] = useState<BarberAppointment | null>(null);
+  const [dailyRevenue, setDailyRevenue] = useState(0);
+  const [dailyPaymentsCount, setDailyPaymentsCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  useEffect(() => {
-    loadAppointments();
-  }, []);
-
-  const loadAppointments = async () => {
+  const loadAppointments = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getBarberTodayAppointments();
-      setAppointments(data || []);
+      const today = formatDateForApi(new Date());
+      const [appointmentsData, financeData, servicesData] = await Promise.all([
+        getBarberTodayAppointments(),
+        getBarberFinanceByRange(today, today),
+        getServices().catch(() => []),
+      ]);
+      const payments = financeData.payments || [];
+      setAppointments(appointmentsData || []);
+      setServicePrices(
+        servicesData.reduce<Record<string, number>>((prices, service) => {
+          const value = typeof service.preço === "string" ? Number(service.preço) : service.preço;
+          prices[service.id] = Number.isFinite(value) ? value : 0;
+          return prices;
+        }, {})
+      );
+      setDailyPaymentsCount(payments.length);
+      setDailyRevenue(payments.reduce((total, payment) => total + payment.amount, 0));
     } catch (err: unknown) {
-      const errorMessage = err && typeof err === 'object' && 'message' in err
+      const errorMessage = err && typeof err === "object" && "message" in err
         ? (err as { message: string }).message
         : "Erro ao carregar agendamentos";
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const formatTime = (timeStr: string) => {
+  useEffect(() => {
+    loadAppointments();
+  }, [loadAppointments]);
+
+  const orderedAppointments = useMemo(
+    () => [...appointments].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
+    [appointments]
+  );
+  const scheduledCount = useMemo(
+    () => appointments.filter((appointment) => appointment.status === "SCHEDULED").length,
+    [appointments]
+  );
+  const completedCount = useMemo(
+    () => appointments.filter((appointment) => appointment.status === "COMPLETED").length,
+    [appointments]
+  );
+  const canceledCount = useMemo(
+    () => appointments.filter((appointment) => appointment.status === "CANCELED").length,
+    [appointments]
+  );
+  const nextAppointment = useMemo(
+    () => orderedAppointments.find((appointment) => appointment.status === "SCHEDULED"),
+    [orderedAppointments]
+  );
+  const todayLabel = new Date().toLocaleDateString("pt-BR", {
+    weekday: isMobile ? "short" : "long",
+    day: "numeric",
+    month: isMobile ? "2-digit" : "long",
+  });
+  const selectedPrice = selectedAppointment ? servicePrices[selectedAppointment.serviceId] : undefined;
+
+  const formatDate = (timeStr: string) => {
     try {
       const date = new Date(timeStr);
-      return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      return date.toLocaleDateString("pt-BR", {
+        weekday: isMobile ? "short" : "long",
+        day: "numeric",
+        month: isMobile ? "2-digit" : "long",
+        year: "numeric",
+      });
     } catch {
-      return timeStr;
+      return "";
     }
   };
 
-  const scheduledCount = appointments.filter((a) => a.status === "SCHEDULED").length;
-  const completedCount = appointments.filter((a) => a.status === "COMPLETED").length;
+  const handleAttend = async () => {
+    if (!selectedAppointment) return;
+
+    try {
+      setActionLoading(true);
+      await attendAppointment(selectedAppointment.id);
+      setSelectedAppointment(null);
+      await loadAppointments();
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === "object" && "message" in err
+        ? (err as { message: string }).message
+        : "Erro ao concluir agendamento";
+      setError(errorMessage);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!selectedAppointment) return;
+
+    try {
+      setActionLoading(true);
+      await cancelAppointment(selectedAppointment.id);
+      setSelectedAppointment(null);
+      await loadAppointments();
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === "object" && "message" in err
+        ? (err as { message: string }).message
+        : "Erro ao cancelar agendamento";
+      setError(errorMessage);
+    } finally {
+      setActionLoading(false);
+      setCancelDialogOpen(false);
+    }
+  };
 
   return (
-    <Box sx={{ maxWidth: 600, mx: "auto", px: { xs: 2, sm: 3 }, py: 2 }}>
+    <Box sx={{ width: "100%", maxWidth: 760, mx: "auto", pb: 2 }}>
       <FeedbackBanner message={error} severity="error" onClose={() => setError(null)} />
-      <Typography variant="h5" sx={{ mb: 0.5, fontWeight: 700, textAlign: "center" }}>
-        Agenda do Dia
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: "center" }}>
-        {new Date().toLocaleDateString("pt-BR", {
-          weekday: isMobile ? "short" : "long",
-          day: "numeric",
-          month: isMobile ? "2-digit" : "long"
-        })}
-      </Typography>
 
-      {!loading && appointments.length > 0 && (
-        <Box
+      <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+        <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+          Agenda
+        </Typography>
+        <Typography
+          variant="h4"
           sx={{
-            display: "flex",
-            gap: 1,
-            justifyContent: "center",
-            flexWrap: "wrap",
-            mb: 2
+            fontSize: { xs: 28, sm: 34 },
+            fontWeight: 800,
+            lineHeight: 1.05,
+            mb: 1,
           }}
         >
-          <Chip label={`Total: ${appointments.length}`} variant="outlined" />
-          <Chip label={`Agendados: ${scheduledCount}`} color="default" />
-          <Chip label={`Atendidos: ${completedCount}`} color="success" />
+          Hoje
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {todayLabel}
+          </Typography>
+          <Chip
+            label={`${appointments.length} no dia`}
+            size="small"
+            variant="outlined"
+            sx={{ flexShrink: 0 }}
+          />
         </Box>
-      )}
+      </Box>
 
       {loading && (
-        <Box display="flex" justifyContent="center" py={4}>
+        <Box display="flex" justifyContent="center" py={8}>
           <CircularProgress />
         </Box>
       )}
 
-      {!loading && appointments.length === 0 && (
-        <Paper sx={{ p: 4, textAlign: "center", borderRadius: 3 }}>
-          <CalendarMonthIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            Nenhum agendamento para hoje
-          </Typography>
-          <Typography variant="body2" color="text.disabled">
-            Volte mais tarde ou amanhã
-          </Typography>
-        </Paper>
-      )}
+      {!loading && (
+        <>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 1,
+              mb: 2,
+            }}
+          >
+            {[
+              { label: "A fazer", value: scheduledCount, icon: <AccessTimeIcon fontSize="small" /> },
+              { label: "Atendidos", value: completedCount, icon: <DoneAllIcon fontSize="small" /> },
+              { label: "Cancelados", value: canceledCount, icon: <EventBusyIcon fontSize="small" /> },
+            ].map((item) => (
+              <Paper
+                key={item.label}
+                elevation={0}
+                sx={{
+                  p: { xs: 1.25, sm: 1.75 },
+                  minHeight: 88,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  bgcolor: "background.paper",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box sx={{ color: "text.secondary", display: "flex" }}>{item.icon}</Box>
+                <Box>
+                  <Typography variant="h6" fontWeight={800} lineHeight={1}>
+                    {item.value}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {item.label}
+                  </Typography>
+                </Box>
+              </Paper>
+            ))}
+          </Box>
 
-      {appointments.map((appointment) => (
-        <Card
-          key={appointment.id}
-          sx={{
-            mb: 2,
-            borderRadius: 3,
-            cursor: appointment.status === "SCHEDULED" ? "pointer" : "default",
-            transition: "all 0.2s ease",
-            "&:hover": appointment.status === "SCHEDULED" ? {
-              transform: "translateY(-2px)",
-              boxShadow: 3
-            } : {}
-          }}
-          onClick={() => {
-            if (appointment.status === "SCHEDULED") {
-              navigate(`/agenda/${appointment.id}`);
-            }
-          }}
-        >
-          <CardContent sx={{ p: 2.5 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <AccessTimeIcon color="primary" fontSize="small" />
-                <Typography variant="h6" fontWeight={600}>
-                  {formatTime(appointment.time)}
-                </Typography>
-              </Box>
-              <Chip
-                label={statusLabels[appointment.status]}
-                color={statusColors[appointment.status]}
-                size="small"
-                sx={{ fontWeight: 500 }}
-              />
-            </Box>
-
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <PersonIcon fontSize="small" color="action" />
-              <Typography variant="body1">
-                {appointment.client}
+          {nextAppointment && (
+            <Paper
+              elevation={0}
+              onClick={() => setSelectedAppointment(nextAppointment)}
+              sx={{
+                p: { xs: 2, sm: 2.5 },
+                mb: 2,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "rgba(37, 208, 179, 0.45)",
+                bgcolor: "rgba(0, 191, 165, 0.08)",
+                cursor: "pointer",
+              }}
+            >
+              <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+                Próximo atendimento
               </Typography>
-            </Box>
-
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <ContentCutIcon fontSize="small" color="action" />
-              <Typography variant="body2" color="text.secondary">
-                {appointment.service}
-              </Typography>
-            </Box>
-
-            {appointment.status === "SCHEDULED" && (
-              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1.5 }}>
-                <IconButton size="small" color="primary">
+              <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2, mt: 0.5 }}>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="h5" fontWeight={800}>
+                    {formatTime(nextAppointment.time)}
+                  </Typography>
+                  <Typography fontWeight={700} noWrap>
+                    {nextAppointment.client}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" noWrap>
+                    {nextAppointment.service}
+                  </Typography>
+                </Box>
+                <IconButton color="primary" sx={{ alignSelf: "center", flexShrink: 0 }}>
                   <ArrowForwardIcon />
                 </IconButton>
               </Box>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+            </Paper>
+          )}
+
+          {orderedAppointments.length === 0 && (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 4,
+                textAlign: "center",
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                bgcolor: "background.paper",
+              }}
+            >
+              <CalendarMonthIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
+              <Typography variant="h6" color="text.secondary">
+                Nenhum agendamento para hoje
+              </Typography>
+              <Typography variant="body2" color="text.disabled">
+                A agenda está livre neste momento.
+              </Typography>
+            </Paper>
+          )}
+
+          {orderedAppointments.length > 0 && (
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                bgcolor: "background.paper",
+                overflow: "hidden",
+              }}
+            >
+              <Box sx={{ p: { xs: 2, sm: 2.5 }, pb: 1 }}>
+                <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+                  Lista do dia
+                </Typography>
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Atendimentos
+                </Typography>
+              </Box>
+
+              <Stack divider={<Divider flexItem />}>
+                {orderedAppointments.map((appointment) => {
+                  const isScheduled = appointment.status === "SCHEDULED";
+                  return (
+                    <Box
+                      key={appointment.id}
+                      component="button"
+                      onClick={() => setSelectedAppointment(appointment)}
+                      sx={{
+                        width: "100%",
+                        border: 0,
+                        bgcolor: "transparent",
+                        color: "inherit",
+                        textAlign: "left",
+                        p: { xs: 2, sm: 2.5 },
+                        display: "grid",
+                        gridTemplateColumns: "64px minmax(0, 1fr) auto",
+                        gap: { xs: 1.5, sm: 2 },
+                        alignItems: "center",
+                        cursor: "pointer",
+                        transition: "background-color 0.2s ease",
+                        "&:hover": { bgcolor: "action.hover" },
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="h6" fontWeight={800} lineHeight={1}>
+                          {formatTime(appointment.time)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          horário
+                        </Typography>
+                      </Box>
+
+                      <Box sx={{ minWidth: 0 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.5 }}>
+                          <PersonIcon fontSize="small" color="action" />
+                          <Typography fontWeight={700} noWrap>
+                            {appointment.client}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                          <ContentCutIcon fontSize="small" color="action" />
+                          <Typography variant="body2" color="text.secondary" noWrap>
+                            {appointment.service}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Stack spacing={1} alignItems="flex-end">
+                        <Chip
+                          label={statusLabels[appointment.status]}
+                          color={statusColors[appointment.status]}
+                          size="small"
+                          variant={isScheduled ? "filled" : "outlined"}
+                          sx={{ fontWeight: 700 }}
+                        />
+                        {isScheduled && <ArrowForwardIcon color="primary" fontSize="small" />}
+                      </Stack>
+                    </Box>
+                  );
+                })}
+              </Stack>
+            </Paper>
+          )}
+
+          <Paper
+            elevation={0}
+            sx={{
+              mt: 2,
+              p: { xs: 2, sm: 2.5 },
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "rgba(37, 208, 179, 0.45)",
+              bgcolor: "rgba(0, 191, 165, 0.08)",
+            }}
+          >
+            <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+              <Box>
+                <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+                  Faturamento do dia
+                </Typography>
+                <Typography variant="h5" fontWeight={800}>
+                  {formatCurrency(dailyRevenue)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {dailyPaymentsCount} {dailyPaymentsCount === 1 ? "pagamento recebido" : "pagamentos recebidos"}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 2,
+                  bgcolor: "rgba(0, 191, 165, 0.16)",
+                  color: "primary.main",
+                  display: "grid",
+                  placeItems: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <PaidIcon />
+              </Box>
+            </Box>
+          </Paper>
+        </>
+      )}
+
+      <Dialog
+        open={!!selectedAppointment}
+        onClose={() => !actionLoading && setSelectedAppointment(null)}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            m: { xs: 1.5, sm: 3 },
+          },
+        }}
+      >
+        {selectedAppointment && (
+          <>
+            <DialogTitle sx={{ pb: 1 }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2, alignItems: "flex-start" }}>
+                <Box>
+                  <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+                    Agendamento
+                  </Typography>
+                  <Typography variant="h6" fontWeight={800}>
+                    {selectedAppointment.client}
+                  </Typography>
+                </Box>
+                <Chip
+                  label={statusLabels[selectedAppointment.status]}
+                  color={statusColors[selectedAppointment.status]}
+                  size="small"
+                  sx={{ fontWeight: 700, mt: 0.5 }}
+                />
+              </Box>
+            </DialogTitle>
+
+            <DialogContent sx={{ pt: 1 }}>
+              <Stack spacing={2} divider={<Divider flexItem />}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5 }}>
+                  <AccessTimeIcon color="primary" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Dia e horário
+                    </Typography>
+                    <Typography fontWeight={800}>{formatTime(selectedAppointment.time)}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {formatDate(selectedAppointment.time)}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5 }}>
+                  <PersonIcon color="primary" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Cliente
+                    </Typography>
+                    <Typography fontWeight={800}>{selectedAppointment.client}</Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5 }}>
+                  <ContentCutIcon color="primary" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Serviço
+                    </Typography>
+                    <Typography fontWeight={800}>{selectedAppointment.service}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {selectedPrice !== undefined ? formatCurrency(selectedPrice) : "Valor não informado"}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Stack>
+            </DialogContent>
+
+            <DialogActions sx={{ p: 2, pt: 0, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
+              {selectedAppointment.status === "SCHEDULED" && (
+                <>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={handleAttend}
+                    disabled={actionLoading}
+                    fullWidth
+                  >
+                    {actionLoading ? "Processando..." : "Concluir"}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={() => setCancelDialogOpen(true)}
+                    disabled={actionLoading}
+                    fullWidth
+                  >
+                    Cancelar
+                  </Button>
+                </>
+              )}
+              <Button
+                variant={selectedAppointment.status === "SCHEDULED" ? "text" : "contained"}
+                onClick={() => setSelectedAppointment(null)}
+                disabled={actionLoading}
+                fullWidth
+              >
+                Fechar
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
+
+      <Dialog
+        open={cancelDialogOpen}
+        onClose={() => !actionLoading && setCancelDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Cancelar agendamento</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCancelDialogOpen(false)} disabled={actionLoading}>
+            Não
+          </Button>
+          <Button onClick={handleCancel} color="error" disabled={actionLoading} autoFocus>
+            Sim, cancelar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
