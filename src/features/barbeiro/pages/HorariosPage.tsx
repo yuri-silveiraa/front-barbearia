@@ -1,47 +1,54 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Box,
-  Typography,
-  Paper,
-  Button,
-  Grid,
-  FormControlLabel,
-  Checkbox,
   Alert,
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  CircularProgress,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  IconButton,
+  MenuItem,
+  Paper,
+  Popover,
   Radio,
   RadioGroup,
-  FormControl,
-  FormLabel,
-  CircularProgress,
-  Popover,
-  Drawer,
-  IconButton,
+  Stack,
   TextField,
-  MenuItem,
+  Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
-import { PickersDay } from "@mui/x-date-pickers";
-import type { PickersDayProps } from "@mui/x-date-pickers";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { PickersDay } from "@mui/x-date-pickers";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
-import DeleteIcon from "@mui/icons-material/Delete";
+import type { PickersDayProps } from "@mui/x-date-pickers";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
 import dayjs, { Dayjs } from "dayjs";
+import "dayjs/locale/pt-br";
 import {
+  deleteTimeSlot,
   generateTimeSlots,
   getMyTimeSlots,
-  deleteTimeSlot,
 } from "../../../api/time/time.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import type { GenerateTimeSlotsParams, TimeSlot, ValidationResult } from "../../../api/time/time.service";
+
+dayjs.locale("pt-br");
 
 const STORAGE_KEY = "barber_time_config";
 
@@ -82,7 +89,7 @@ function TimeSelect({
   label: string;
 }) {
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
       <TimePicker
         label={label}
         value={dayjs(value, "HH:mm")}
@@ -97,12 +104,19 @@ function TimeSelect({
           textField: {
             size: "small",
             fullWidth: true,
-            sx: { width: 130 },
           },
         }}
       />
     </LocalizationProvider>
   );
+}
+
+function formatDateLabel(date: string) {
+  return dayjs(date).format("ddd, DD/MM/YYYY");
+}
+
+function formatSlotTime(slot: TimeSlot) {
+  return dayjs(slot.date).format("HH:mm");
 }
 
 export default function HorariosPage() {
@@ -117,7 +131,7 @@ export default function HorariosPage() {
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [selectedDayAnchor, setSelectedDayAnchor] = useState<{ el: HTMLElement | null; date: string } | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; loading: boolean }>({ open: false, loading: false });
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, loading: false });
   const [selectedWarningOption, setSelectedWarningOption] = useState("0");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -133,21 +147,22 @@ export default function HorariosPage() {
     }
   }, []);
 
-  useEffect(() => {
-    loadTimeSlots();
-  }, []);
-
   const loadTimeSlots = async () => {
     try {
       setLoadingSlots(true);
       const slots = await getMyTimeSlots();
       setTimeSlots(slots);
-    } catch {
-      console.error("Erro ao carregar horários");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao carregar horários";
+      setError(message);
     } finally {
       setLoadingSlots(false);
     }
   };
+
+  useEffect(() => {
+    loadTimeSlots();
+  }, []);
 
   const saveConfig = (newConfig: TimeConfig) => {
     setConfig(newConfig);
@@ -156,37 +171,78 @@ export default function HorariosPage() {
 
   const handleCalendarChange = (date: Dayjs | null) => {
     if (!date) return;
-    
     const dateStr = date.format("YYYY-MM-DD");
 
-    if (selectedDays.includes(dateStr)) {
-      setSelectedDays(selectedDays.filter((d) => d !== dateStr));
-    } else {
-      setSelectedDays([...selectedDays, dateStr]);
-    }
+    setSelectedDays((days) =>
+      days.includes(dateStr) ? days.filter((item) => item !== dateStr) : [...days, dateStr]
+    );
   };
 
-  const shouldDisableDate = (date: Dayjs) => {
-    return date.isBefore(dayjs(), "day");
-  };
+  const shouldDisableDate = (date: Dayjs) => date.isBefore(dayjs(), "day");
 
-  const DayComponent = (props: PickersDayProps) => {
+  const GenerateDay = (props: PickersDayProps) => {
     const dateStr = props.day.format("YYYY-MM-DD");
     const isSelected = selectedDays.includes(dateStr);
-    
+
     return (
       <PickersDay
         {...props}
         sx={{
-          backgroundColor: isSelected ? "primary.main" : "transparent",
-          color: isSelected ? "white" : "text.primary",
+          borderRadius: 2,
+          bgcolor: isSelected ? "primary.main" : "transparent",
+          color: isSelected ? "primary.contrastText" : "text.primary",
+          fontWeight: isSelected ? 800 : 500,
           "&:hover": {
-            backgroundColor: isSelected ? "primary.dark" : "action.hover",
+            bgcolor: isSelected ? "primary.dark" : "action.hover",
           },
         }}
       />
     );
   };
+
+  const daysWithSlots = useMemo(() => {
+    const days = new Set<string>();
+    timeSlots.forEach((slot) => {
+      days.add(dayjs(slot.date).format("YYYY-MM-DD"));
+    });
+    return days;
+  }, [timeSlots]);
+
+  const ViewDay = (props: PickersDayProps) => {
+    const dateStr = props.day.format("YYYY-MM-DD");
+    const hasSlots = daysWithSlots.has(dateStr);
+
+    return (
+      <PickersDay
+        {...props}
+        sx={{
+          borderRadius: 2,
+          bgcolor: hasSlots ? "rgba(0, 191, 165, 0.12)" : "transparent",
+          color: hasSlots ? "primary.main" : "text.disabled",
+          fontWeight: hasSlots ? 800 : 500,
+          border: hasSlots ? "1px solid rgba(0, 191, 165, 0.35)" : "1px solid transparent",
+        }}
+      />
+    );
+  };
+
+  const getSlotsForDay = (dateStr: string) =>
+    timeSlots
+      .filter((slot) => dayjs(slot.date).format("YYYY-MM-DD") === dateStr)
+      .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix());
+
+  const upcomingSlots = useMemo(
+    () => timeSlots.filter((slot) => dayjs(slot.date).isAfter(dayjs())).length,
+    [timeSlots]
+  );
+  const nextWorkDay = useMemo(
+    () => Array.from(daysWithSlots).sort((a, b) => (a > b ? 1 : -1))[0] ?? null,
+    [daysWithSlots]
+  );
+  const selectedPeriodLabel =
+    selectedDays.length > 0
+      ? `${selectedDays.length} ${selectedDays.length === 1 ? "dia selecionado" : "dias selecionados"}`
+      : "Nenhum dia selecionado";
 
   const handleGenerate = async () => {
     if (selectedDays.length === 0) {
@@ -236,11 +292,8 @@ export default function HorariosPage() {
         await loadTimeSlots();
       }
     } catch (err: unknown) {
-      if (err && typeof err === "object" && "message" in err) {
-        setError((err as { message: string }).message);
-      } else {
-        setError("Erro ao gerar horários");
-      }
+      const message = err instanceof Error ? err.message : "Erro ao gerar horários";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -267,11 +320,8 @@ export default function HorariosPage() {
         await loadTimeSlots();
       }
     } catch (err: unknown) {
-      if (err && typeof err === "object" && "message" in err) {
-        setError((err as { message: string }).message);
-      } else {
-        setError("Erro ao gerar horários");
-      }
+      const message = err instanceof Error ? err.message : "Erro ao gerar horários";
+      setError(message);
     } finally {
       setLoading(false);
       setPendingParams(null);
@@ -279,21 +329,13 @@ export default function HorariosPage() {
   };
 
   const handleCheckboxChange = (id: string) => {
-    if (selectedSlots.includes(id)) {
-      setSelectedSlots(selectedSlots.filter((s) => s !== id));
-    } else {
-      setSelectedSlots([...selectedSlots, id]);
-    }
+    setSelectedSlots((slots) => (slots.includes(id) ? slots.filter((slot) => slot !== id) : [...slots, id]));
   };
 
   const handleSelectAll = () => {
     if (!selectedDayAnchor) return;
-    const daySlots = getSlotsForDay(selectedDayAnchor.date).map((s) => s.id);
-    if (selectedSlots.length === daySlots.length) {
-      setSelectedSlots([]);
-    } else {
-      setSelectedSlots(daySlots);
-    }
+    const daySlots = getSlotsForDay(selectedDayAnchor.date).map((slot) => slot.id);
+    setSelectedSlots((slots) => (slots.length === daySlots.length ? [] : daySlots));
   };
 
   const handleDeleteSelected = async () => {
@@ -308,410 +350,433 @@ export default function HorariosPage() {
       setSuccess("Horários excluídos com sucesso!");
     } catch (err: unknown) {
       setDeleteDialog({ open: false, loading: false });
-      if (err && typeof err === "object" && "message" in err) {
-        setError((err as { message: string }).message);
-      } else {
-        setError("Erro ao excluir horários");
-      }
+      const message = err instanceof Error ? err.message : "Erro ao excluir horários";
+      setError(message);
     }
   };
 
-  const daysWithSlots = useMemo(() => {
-    const days = new Set<string>();
-    timeSlots.forEach((slot) => {
-      days.add(dayjs(slot.date).format("YYYY-MM-DD"));
-    });
-    return days;
-  }, [timeSlots]);
-
-  const getSlotsForDay = (dateStr: string) => {
-    return timeSlots
-      .filter((slot) => dayjs(slot.date).format("YYYY-MM-DD") === dateStr)
-      .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix());
+  const closeSelectedDay = () => {
+    setSelectedDayAnchor(null);
+    setSelectedSlots([]);
   };
 
-  const handleDayClick = (event: React.MouseEvent<HTMLElement>, date: string) => {
-    if (daysWithSlots.has(date)) {
-      setSelectedDayAnchor({ el: event.currentTarget, date });
-    }
-  };
+  const slotManager = (
+    <Box sx={{ p: 2, maxHeight: isMobile ? "68vh" : 420, overflow: "auto" }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, mb: 2 }}>
+        <Box>
+          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+            Horários do dia
+          </Typography>
+          <Typography variant="subtitle1" fontWeight={800}>
+            {selectedDayAnchor?.date ? formatDateLabel(selectedDayAnchor.date) : ""}
+          </Typography>
+        </Box>
+        <IconButton size="small" onClick={closeSelectedDay}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </Box>
 
-  const selectionText = selectedDays.length > 0
-    ? `${selectedDays.length} dia${selectedDays.length > 1 ? "s" : ""} selecionado${selectedDays.length > 1 ? "s" : ""}`
-    : "";
+      {selectedDayAnchor && getSlotsForDay(selectedDayAnchor.date).length === 0 ? (
+        <Typography color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
+          Nenhum horário disponível
+        </Typography>
+      ) : (
+        <>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, mb: 2 }}>
+            {selectedDayAnchor &&
+              getSlotsForDay(selectedDayAnchor.date).map((slot) => {
+                const checked = selectedSlots.includes(slot.id);
+                return (
+                  <Paper
+                    key={slot.id}
+                    component="button"
+                    type="button"
+                    elevation={0}
+                    onClick={() => handleCheckboxChange(slot.id)}
+                    sx={{
+                      p: 1,
+                      minHeight: 44,
+                      borderRadius: 2,
+                      border: "1px solid",
+                      borderColor: checked ? "error.main" : "divider",
+                      bgcolor: checked ? "rgba(244, 67, 54, 0.12)" : "background.default",
+                      color: "inherit",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Typography fontWeight={800}>{formatSlotTime(slot)}</Typography>
+                  </Paper>
+                );
+              })}
+          </Box>
+
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+            <Button size="small" onClick={handleSelectAll} disabled={!selectedDayAnchor}>
+              {selectedDayAnchor && selectedSlots.length === getSlotsForDay(selectedDayAnchor.date).length
+                ? "Desmarcar todos"
+                : "Selecionar todos"}
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={() => setDeleteDialog({ open: true, loading: false })}
+              disabled={selectedSlots.length === 0}
+              startIcon={<DeleteIcon />}
+            >
+              Excluir ({selectedSlots.length})
+            </Button>
+          </Stack>
+        </>
+      )}
+    </Box>
+  );
 
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto", px: 2, py: 2 }}>
+    <Box sx={{ width: "100%", maxWidth: 980, mx: "auto", pb: 2 }}>
       <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />
       <FeedbackBanner message={success} severity="success" onClose={() => setSuccess("")} />
-      <Typography variant="h5" sx={{ mb: 0.5, fontWeight: 700, textAlign: "center" }}>
-        Gerenciar Horários
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: "center" }}>
-        Configure seus horários de trabalho
-      </Typography>
 
-      <Paper sx={{ p: 3, mb: 2, borderRadius: 3, backgroundColor: "background.paper" }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: "text.primary" }}>
-          Configuração de Horários
+      <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+        <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+          Horários
         </Typography>
-
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 6, sm: 3 }}>
-            <TimeSelect
-              label="Início"
-              value={config.startTime}
-              onChange={(time) => saveConfig({ ...config, startTime: time })}
-            />
-          </Grid>
-          <Grid size={{ xs: 6, sm: 3 }}>
-            <TimeSelect
-              label="Fim"
-              value={config.endTime}
-              onChange={(time) => saveConfig({ ...config, endTime: time })}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              select
-              label="Duração do atendimento"
-              value={config.blockDuration}
-              onChange={(e) => saveConfig({ ...config, blockDuration: Number(e.target.value) })}
-              fullWidth
-              size="small"
-            >
-              {blockDurationOptions.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-        </Grid>
-
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={config.hasInterval}
-              onChange={(e) => saveConfig({ ...config, hasInterval: e.target.checked })}
-              size="small"
-              sx={{ mt: 1 }}
-            />
-          }
-          label="Ativar intervalo de almoço"
-          sx={{ mt: 1, color: "text.primary" }}
-        />
-
-        {config.hasInterval && (
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={{ xs: 6, sm: 3 }}>
-              <TimeSelect
-                label="Início do intervalo"
-                value={config.intervalStart}
-                onChange={(time) => saveConfig({ ...config, intervalStart: time, hasInterval: true })}
-              />
-            </Grid>
-            <Grid size={{ xs: 6, sm: 3 }}>
-              <TextField
-                label="Duração (min)"
-                type="number"
-                value={config.intervalDuration}
-                onChange={(e) =>
-                  saveConfig({
-                    ...config,
-                    intervalDuration: Number(e.target.value),
-                    hasInterval: true,
-                  })
-                }
-                fullWidth
-                size="small"
-                inputProps={{ min: 15, max: 120 }}
-              />
-            </Grid>
-          </Grid>
-        )}
-      </Paper>
-
-      <Paper sx={{ p: 3, mb: 2, borderRadius: 3, backgroundColor: "background.paper" }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: "text.primary" }}>
-          Selecionar Período
+        <Typography
+          variant="h4"
+          sx={{
+            fontSize: { xs: 28, sm: 34 },
+            fontWeight: 800,
+            lineHeight: 1.05,
+            mb: 1,
+          }}
+        >
+          Gerenciar agenda
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Clique nos dias que deseja gerar horários
+        <Typography variant="body2" color="text.secondary">
+          Crie blocos de atendimento e acompanhe os dias disponíveis.
         </Typography>
+      </Box>
 
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DateCalendar
-            value={null}
-            onChange={handleCalendarChange}
-            shouldDisableDate={shouldDisableDate}
-            minDate={dayjs()}
-            maxDate={dayjs().add(60, "day")}
-            slots={{ day: DayComponent }}
-            sx={{ 
-              width: "100%", 
-              maxWidth: 350, 
-              mx: "auto",
-              "& .MuiPickersCalendarHeader-root": { color: "text.primary" },
-              "& .MuiDayCalendar-weekDayLabel": { color: "text.secondary" },
-              "& .MuiPickersDay-root": { color: "text.primary" },
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" },
+          gap: 1,
+          mb: 2,
+        }}
+      >
+        {[
+          { label: "Horários futuros", value: upcomingSlots, icon: <AccessTimeIcon fontSize="small" /> },
+          { label: "Dias ativos", value: daysWithSlots.size, icon: <EventAvailableIcon fontSize="small" /> },
+          { label: "Bloco", value: `${config.blockDuration} min`, icon: <CalendarMonthIcon fontSize="small" /> },
+          { label: "Próximo dia", value: nextWorkDay ? dayjs(nextWorkDay).format("DD/MM") : "--", icon: <CalendarMonthIcon fontSize="small" /> },
+        ].map((item) => (
+          <Paper
+            key={item.label}
+            elevation={0}
+            sx={{
+              p: { xs: 1.25, sm: 1.75 },
+              minHeight: 92,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 2,
+              bgcolor: "background.paper",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
             }}
-          />
-        </LocalizationProvider>
-
-        <Box sx={{ mt: 3, textAlign: "center" }}>
-          {selectionText && (
-            <Typography variant="body2" color="primary" sx={{ mb: 1 }}>
-              {selectionText}
-            </Typography>
-          )}
-          <Button
-            variant="contained"
-            onClick={handleGenerate}
-            disabled={loading || selectedDays.length === 0}
-            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <AccessTimeIcon />}
-            sx={{ px: 4 }}
           >
-            {loading ? "Gerando..." : "Gerar Horários"}
-          </Button>
-        </Box>
-      </Paper>
+            <Box sx={{ color: "text.secondary", display: "flex" }}>{item.icon}</Box>
+            <Box>
+              <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
+                {item.value}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {item.label}
+              </Typography>
+            </Box>
+          </Paper>
+        ))}
+      </Box>
 
-      <Paper sx={{ p: 3, borderRadius: 3, backgroundColor: "background.paper" }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: "text.primary" }}>
-          Meus Horários
-        </Typography>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "0.92fr 1.08fr" },
+          gap: 2,
+          alignItems: "start",
+        }}
+      >
+        <Stack spacing={2}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 2.5 },
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+            }}
+          >
+            <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+              Configuração
+            </Typography>
+            <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 2 }}>
+              Jornada de trabalho
+            </Typography>
 
-        {loadingSlots ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress />
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 1.25 }}>
+              <TimeSelect
+                label="Início"
+                value={config.startTime}
+                onChange={(time) => saveConfig({ ...config, startTime: time })}
+              />
+              <TimeSelect
+                label="Fim"
+                value={config.endTime}
+                onChange={(time) => saveConfig({ ...config, endTime: time })}
+              />
+              <Box sx={{ gridColumn: "1 / -1" }}>
+                <TextField
+                  select
+                  label="Duração do atendimento"
+                  value={config.blockDuration}
+                  onChange={(event) => saveConfig({ ...config, blockDuration: Number(event.target.value) })}
+                  fullWidth
+                  size="small"
+                >
+                  {blockDurationOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+            </Box>
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={config.hasInterval}
+                  onChange={(event) => saveConfig({ ...config, hasInterval: event.target.checked })}
+                  size="small"
+                />
+              }
+              label="Ativar intervalo"
+              sx={{ mt: 1.25 }}
+            />
+
+            {config.hasInterval && (
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 1.25, mt: 1 }}>
+                <TimeSelect
+                  label="Início"
+                  value={config.intervalStart}
+                  onChange={(time) => saveConfig({ ...config, intervalStart: time, hasInterval: true })}
+                />
+                <TextField
+                  label="Duração (min)"
+                  type="number"
+                  value={config.intervalDuration}
+                  onChange={(event) =>
+                    saveConfig({
+                      ...config,
+                      intervalDuration: Number(event.target.value),
+                      hasInterval: true,
+                    })
+                  }
+                  fullWidth
+                  size="small"
+                  inputProps={{ min: 15, max: 120 }}
+                  InputProps={{ startAdornment: <RestaurantIcon color="action" sx={{ mr: 1 }} /> }}
+                />
+              </Box>
+            )}
+          </Paper>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 2.5 },
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+            }}
+          >
+            <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+              Criar horários
+            </Typography>
+            <Typography variant="subtitle1" fontWeight={800}>
+              Selecione os dias
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+              Toque nos dias em que deseja disponibilizar essa jornada.
+            </Typography>
+
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+              <DateCalendar
+                value={null}
+                onChange={handleCalendarChange}
+                shouldDisableDate={shouldDisableDate}
+                minDate={dayjs()}
+                maxDate={dayjs().add(60, "day")}
+                slots={{ day: GenerateDay }}
+                sx={{
+                  width: "100%",
+                  maxWidth: 350,
+                  mx: "auto",
+                  "& .MuiDayCalendar-weekDayLabel": { color: "text.secondary" },
+                }}
+              />
+            </LocalizationProvider>
+
+            <Box sx={{ mt: 2 }}>
+              <Chip label={selectedPeriodLabel} color={selectedDays.length > 0 ? "primary" : "default"} size="small" />
+            </Box>
+
+            <Button
+              variant="contained"
+              onClick={handleGenerate}
+              disabled={loading || selectedDays.length === 0}
+              startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <AccessTimeIcon />}
+              fullWidth
+              sx={{ mt: 2, minHeight: 44 }}
+            >
+              {loading ? "Gerando..." : "Gerar horários"}
+            </Button>
+          </Paper>
+        </Stack>
+
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.paper",
+          }}
+        >
+          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2, mb: 1.5 }}>
+            <Box>
+              <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+                Horários criados
+              </Typography>
+              <Typography variant="subtitle1" fontWeight={800}>
+                Calendário disponível
+              </Typography>
+            </Box>
+            <Chip label={`${upcomingSlots} horários`} size="small" variant="outlined" />
           </Box>
-        ) : daysWithSlots.size === 0 ? (
-          <Typography color="text.secondary" sx={{ textAlign: "center", py: 4 }}>
-            Nenhum horário cadastrado
-          </Typography>
-        ) : (
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DateCalendar
-              value={null}
-              onChange={(date) => {
-                if (date) {
+
+          {loadingSlots ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+              <CircularProgress />
+            </Box>
+          ) : daysWithSlots.size === 0 ? (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 4,
+                textAlign: "center",
+                borderRadius: 2,
+                border: "1px dashed",
+                borderColor: "divider",
+                bgcolor: "background.default",
+              }}
+            >
+              <CalendarMonthIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
+              <Typography variant="h6" color="text.secondary">
+                Nenhum horário cadastrado
+              </Typography>
+              <Typography variant="body2" color="text.disabled">
+                Configure sua jornada e selecione os dias para começar.
+              </Typography>
+            </Paper>
+          ) : (
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+              <DateCalendar
+                value={null}
+                onChange={(date) => {
+                  if (!date) return;
                   const dateStr = date.format("YYYY-MM-DD");
                   if (daysWithSlots.has(dateStr)) {
-                    handleDayClick({ currentTarget: document.createElement("div") } as unknown as React.MouseEvent<HTMLElement>, dateStr);
+                    setSelectedDayAnchor({ el: null, date: dateStr });
                   }
-                }
-              }}
-              minDate={dayjs()}
-              shouldDisableDate={(date) => {
-                const dateStr = date.format("YYYY-MM-DD");
-                return !daysWithSlots.has(dateStr);
-              }}
-              sx={{ 
-                width: "100%", 
-                maxWidth: 350, 
-                mx: "auto",
-                "& .MuiPickersCalendarHeader-root": { color: "text.primary" },
-                "& .MuiDayCalendar-weekDayLabel": { color: "text.secondary" },
-                "& .MuiPickersDay-root": { color: "text.primary" },
-              }}
-            />
-          </LocalizationProvider>
-        )}
-      </Paper>
+                }}
+                minDate={dayjs()}
+                shouldDisableDate={(date) => !daysWithSlots.has(date.format("YYYY-MM-DD"))}
+                slots={{ day: ViewDay }}
+                sx={{
+                  width: "100%",
+                  maxWidth: 350,
+                  mx: "auto",
+                  "& .MuiDayCalendar-weekDayLabel": { color: "text.secondary" },
+                }}
+              />
+            </LocalizationProvider>
+          )}
+        </Paper>
+      </Box>
 
       {isMobile ? (
         <Drawer
           anchor="bottom"
           open={!!selectedDayAnchor}
-          onClose={() => {
-            setSelectedDayAnchor(null);
-            setSelectedSlots([]);
+          onClose={closeSelectedDay}
+          PaperProps={{
+            sx: {
+              bgcolor: "background.paper",
+              borderRadius: "8px 8px 0 0",
+            },
           }}
-          PaperProps={{ sx: { backgroundColor: "background.paper" } }}
         >
-          <Box sx={{ p: 2, maxHeight: "65vh", overflow: "auto" }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "text.primary" }}>
-                {selectedDayAnchor?.date && dayjs(selectedDayAnchor.date).format("DD/MM/YYYY")}
-              </Typography>
-              <IconButton size="small" onClick={() => {
-                setSelectedDayAnchor(null);
-                setSelectedSlots([]);
-              }}>
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
-
-            {selectedDayAnchor && getSlotsForDay(selectedDayAnchor.date).length === 0 ? (
-              <Typography color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
-                Nenhum horário disponível
-              </Typography>
-            ) : (
-              <>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 2 }}>
-                  {selectedDayAnchor && getSlotsForDay(selectedDayAnchor.date).map((slot) => (
-                    <FormControlLabel
-                      key={slot.id}
-                      control={
-                        <Checkbox
-                          size="medium"
-                          checked={selectedSlots.includes(slot.id)}
-                          onChange={() => handleCheckboxChange(slot.id)}
-                        />
-                      }
-                      label={
-                        <Typography color="text.primary">
-                          {dayjs(slot.date).format("HH:mm")}
-                        </Typography>
-                      }
-                      sx={{
-                        margin: 0,
-                        "&:hover": { backgroundColor: "action.hover", borderRadius: 1 }
-                      }}
-                    />
-                  ))}
-                </Box>
-
-                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                  <Button
-                    size="small"
-                    onClick={handleSelectAll}
-                    disabled={!selectedDayAnchor}
-                  >
-                    {selectedDayAnchor && selectedSlots.length === getSlotsForDay(selectedDayAnchor.date).length
-                      ? "Desmarcar Todos"
-                      : "Selecionar Todos"}
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    size="small"
-                    onClick={() => setDeleteDialog({ open: true, loading: false })}
-                    disabled={selectedSlots.length === 0}
-                    startIcon={<DeleteIcon />}
-                  >
-                    Excluir ({selectedSlots.length})
-                  </Button>
-                </Box>
-              </>
-            )}
-          </Box>
+          {slotManager}
         </Drawer>
       ) : (
         <Popover
           open={!!selectedDayAnchor}
           anchorEl={selectedDayAnchor?.el}
-          onClose={() => {
-            setSelectedDayAnchor(null);
-            setSelectedSlots([]);
-          }}
+          onClose={closeSelectedDay}
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
           transformOrigin={{ vertical: "top", horizontal: "center" }}
-          PaperProps={{ sx: { backgroundColor: "background.paper", minWidth: 300 } }}
+          PaperProps={{ sx: { bgcolor: "background.paper", minWidth: 340, borderRadius: 2 } }}
         >
-          <Box sx={{ p: 2, maxHeight: 400, overflow: "auto" }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "text.primary" }}>
-                {selectedDayAnchor?.date && dayjs(selectedDayAnchor.date).format("DD/MM/YYYY")}
-              </Typography>
-              <IconButton size="small" onClick={() => {
-                setSelectedDayAnchor(null);
-                setSelectedSlots([]);
-              }}>
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
-
-            {selectedDayAnchor && getSlotsForDay(selectedDayAnchor.date).length === 0 ? (
-              <Typography color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
-                Nenhum horário disponível
-              </Typography>
-            ) : (
-              <>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 2 }}>
-                  {selectedDayAnchor && getSlotsForDay(selectedDayAnchor.date).map((slot) => (
-                    <FormControlLabel
-                      key={slot.id}
-                      control={
-                        <Checkbox
-                          size="medium"
-                          checked={selectedSlots.includes(slot.id)}
-                          onChange={() => handleCheckboxChange(slot.id)}
-                        />
-                      }
-                      label={
-                        <Typography color="text.primary">
-                          {dayjs(slot.date).format("HH:mm")}
-                        </Typography>
-                      }
-                      sx={{
-                        margin: 0,
-                        "&:hover": { backgroundColor: "action.hover", borderRadius: 1 }
-                      }}
-                    />
-                  ))}
-                </Box>
-
-                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                  <Button
-                    size="small"
-                    onClick={handleSelectAll}
-                    disabled={!selectedDayAnchor}
-                  >
-                    {selectedDayAnchor && selectedSlots.length === getSlotsForDay(selectedDayAnchor.date).length
-                      ? "Desmarcar Todos"
-                      : "Selecionar Todos"}
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    size="small"
-                    onClick={() => setDeleteDialog({ open: true, loading: false })}
-                    disabled={selectedSlots.length === 0}
-                    startIcon={<DeleteIcon />}
-                  >
-                    Excluir ({selectedSlots.length})
-                  </Button>
-                </Box>
-              </>
-            )}
-          </Box>
+          {slotManager}
         </Popover>
       )}
 
-      <Dialog 
-        open={!!warningDialog} 
-        onClose={() => setWarningDialog(null)} 
-        maxWidth="sm" 
+      <Dialog
+        open={!!warningDialog}
+        onClose={() => setWarningDialog(null)}
+        maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { backgroundColor: "background.paper" } }}
+        PaperProps={{ sx: { bgcolor: "background.paper", borderRadius: 2 } }}
       >
-        <DialogTitle sx={{ color: "text.primary" }}>Atenção</DialogTitle>
+        <DialogTitle>Atenção</DialogTitle>
         <DialogContent>
           <Alert severity="warning" sx={{ mb: 2 }}>
             {warningDialog?.warning?.message}
           </Alert>
           <FormControl>
-            <FormLabel sx={{ color: "text.primary" }}>Escolha uma opção:</FormLabel>
+            <FormLabel>Escolha uma opção:</FormLabel>
             <RadioGroup
               value={selectedWarningOption}
               onChange={(event) => setSelectedWarningOption(event.target.value)}
             >
-              {warningDialog?.warning?.options.map((opt, idx) => (
+              {warningDialog?.warning?.options.map((option, index) => (
                 <FormControlLabel
-                  key={idx}
-                  value={idx.toString()}
+                  key={`${option.start}-${option.end}`}
+                  value={index.toString()}
                   control={<Radio />}
-                  label={`${opt.start} - ${opt.end}`}
-                  sx={{ color: "text.primary" }}
+                  label={`${option.start} - ${option.end}`}
                 />
               ))}
             </RadioGroup>
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setWarningDialog(null)} sx={{ color: "text.secondary" }}>Cancelar</Button>
+          <Button onClick={() => setWarningDialog(null)}>Cancelar</Button>
           <Button variant="contained" onClick={() => handleWarningConfirm(Number(selectedWarningOption))}>
             Confirmar
           </Button>
@@ -723,31 +788,23 @@ export default function HorariosPage() {
         onClose={() => !deleteDialog.loading && setDeleteDialog({ open: false, loading: false })}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { backgroundColor: "background.paper" } }}
+        PaperProps={{ sx: { bgcolor: "background.paper", borderRadius: 2 } }}
       >
-        <DialogTitle sx={{ color: "text.primary" }}>Confirmar Exclusão</DialogTitle>
+        <DialogTitle>Confirmar exclusão</DialogTitle>
         <DialogContent>
-          <Typography color="text.primary">
-            Tem certeza que deseja excluir {selectedSlots.length} horário(s) selecionado(s)?
+          <Typography>
+            Tem certeza que deseja excluir {selectedSlots.length}{" "}
+            {selectedSlots.length === 1 ? "horário selecionado" : "horários selecionados"}?
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Esta ação não pode ser desfeita.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button 
-            onClick={() => setDeleteDialog({ open: false, loading: false })} 
-            disabled={deleteDialog.loading}
-            sx={{ color: "text.secondary" }}
-          >
+          <Button onClick={() => setDeleteDialog({ open: false, loading: false })} disabled={deleteDialog.loading}>
             Cancelar
           </Button>
-          <Button 
-            variant="contained" 
-            color="error"
-            onClick={handleDeleteSelected}
-            disabled={deleteDialog.loading}
-          >
+          <Button variant="contained" color="error" onClick={handleDeleteSelected} disabled={deleteDialog.loading}>
             {deleteDialog.loading ? "Excluindo..." : "Excluir"}
           </Button>
         </DialogActions>
