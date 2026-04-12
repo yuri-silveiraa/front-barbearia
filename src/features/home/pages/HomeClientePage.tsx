@@ -1,20 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Avatar,
   Box,
   Button,
   Chip,
   CircularProgress,
   Paper,
-  Stack,
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
-import ScheduleIcon from "@mui/icons-material/Schedule";
 import { getReservas, getServices } from "../../../api/reservas/reserva.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import type { Service } from "../../../api/reservas/types";
@@ -126,17 +123,17 @@ export default function HomeClientePage() {
 
       <Box
         sx={{
-          minHeight: { xs: 280, md: 360 },
-          borderRadius: { xs: 4, md: 6 },
+          minHeight: { xs: 300, md: 360 },
+          borderRadius: 2,
           overflow: "hidden",
           position: "relative",
-          p: { xs: 3, md: 5 },
+          p: { xs: 2.5, md: 5 },
           display: "flex",
-          alignItems: "flex-end",
+          alignItems: "center",
           background:
             "linear-gradient(140deg, rgba(3, 12, 17, 0.96) 0%, rgba(8, 31, 40, 0.9) 48%, rgba(0, 191, 165, 0.28) 100%)",
           border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: "0 24px 70px rgba(0,0,0,0.35)",
+          boxShadow: "0 24px 70px rgba(0,0,0,0.28)",
           "&::before": {
             content: '""',
             position: "absolute",
@@ -146,7 +143,7 @@ export default function HomeClientePage() {
           },
         }}
       >
-        <Box sx={{ position: "relative", zIndex: 1, maxWidth: 660 }}>
+        <Box sx={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 660 }}>
           <Chip
             icon={<EventAvailableIcon />}
             label={nextReservation ? "Próximo agendamento" : "Sua próxima visita"}
@@ -166,6 +163,7 @@ export default function HomeClientePage() {
               fontSize: { xs: "2.1rem", md: "3.8rem" },
               lineHeight: 0.95,
               mb: 2,
+              maxWidth: 620,
             }}
           >
             {nextReservation ? nextReservation.service : "Escolha o horário do seu próximo corte."}
@@ -177,90 +175,66 @@ export default function HomeClientePage() {
               : "Veja os serviços disponíveis e reserve em poucos passos."}
           </Typography>
 
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5, maxWidth: 420 }}>
+            {!nextReservation && (
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<AddIcon />}
+                onClick={() => navigate("/reservas/create")}
+              >
+                Novo agendamento
+              </Button>
+            )}
             <Button
-              variant="contained"
-              size="large"
-              startIcon={<AddIcon />}
-              onClick={() => navigate("/reservas/create")}
-            >
-              Novo agendamento
-            </Button>
-            <Button
-              variant="outlined"
+              variant={nextReservation ? "contained" : "outlined"}
               size="large"
               startIcon={<CalendarMonthIcon />}
               onClick={() => navigate("/reservas")}
             >
-              Meus agendamentos
+              {nextReservation ? "Ver agendamento" : "Meus agendamentos"}
             </Button>
-          </Stack>
+          </Box>
         </Box>
       </Box>
 
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "0.9fr 1.1fr" },
-          gap: 3,
-          alignItems: "stretch",
-        }}
-      >
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2.5, md: 3 },
-            borderRadius: 4,
-            bgcolor: "rgba(255,255,255,0.035)",
-            border: "1px solid rgba(255,255,255,0.08)",
-          }}
-        >
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-            <Avatar sx={{ bgcolor: "rgba(0,191,165,0.16)", color: "primary.main" }}>
-              <ScheduleIcon />
-            </Avatar>
-            <Box>
-              <Typography variant="h6" fontWeight={750}>
-                Agenda rápida
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Acompanhe seu próximo atendimento.
-              </Typography>
-            </Box>
-          </Stack>
-
-          {nextReservation ? (
-            <Box>
-              <Typography variant="h5" fontWeight={750}>
-                {formatDateTime(nextReservation.time)}
-              </Typography>
-              <Typography color="text.secondary" sx={{ mt: 1 }}>
-                {nextReservation.service} com {nextReservation.barber}
-              </Typography>
-            </Box>
-          ) : (
-            <Typography color="text.secondary">
-              Você ainda não tem um agendamento futuro. Crie um para garantir seu horário.
+      <Box>
+        <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 2, mb: 2 }}>
+          <Box>
+            <Typography variant="h5" fontWeight={800} sx={{ mb: 0.5 }}>
+              Serviços disponíveis
             </Typography>
-          )}
-        </Paper>
+            <Typography variant="body2" color="text.secondary">
+              Escolha o atendimento que combina com o que você precisa.
+            </Typography>
+          </Box>
+          <Chip label={`${services.length} serviços`} variant="outlined" sx={{ flexShrink: 0 }} />
+        </Box>
 
-        <Box>
-          <Typography variant="h5" fontWeight={800} sx={{ mb: 0.5 }}>
-            Serviços disponíveis
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Escolha o serviço que combina com o atendimento que você quer.
-          </Typography>
-
+        {services.length === 0 ? (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              borderRadius: 2,
+              border: "1px dashed",
+              borderColor: "divider",
+              textAlign: "center",
+              bgcolor: "background.paper",
+            }}
+          >
+            <ContentCutIcon sx={{ color: "text.disabled", mb: 1 }} />
+            <Typography color="text.secondary">Nenhum serviço disponível no momento.</Typography>
+          </Paper>
+        ) : (
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
               gap: 2,
             }}
           >
-            {services.slice(0, 4).map((service) => {
+            {services.map((service) => {
               const imageUrl = resolveImageUrl(service.imagemUrl);
 
               return (
@@ -271,7 +245,7 @@ export default function HomeClientePage() {
                   sx={{
                     minHeight: 190,
                     p: 2,
-                    borderRadius: 4,
+                    borderRadius: 2,
                     position: "relative",
                     overflow: "hidden",
                     cursor: "pointer",
@@ -323,7 +297,7 @@ export default function HomeClientePage() {
               );
             })}
           </Box>
-        </Box>
+        )}
       </Box>
     </Box>
   );
