@@ -11,13 +11,16 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
+  MenuItem,
   Paper,
   Stack,
+  TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import AddIcon from "@mui/icons-material/Add";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
@@ -27,9 +30,11 @@ import PaidIcon from "@mui/icons-material/Paid";
 import PersonIcon from "@mui/icons-material/Person";
 import { getServices } from "../../../api/servicos/servico.service";
 import { getBarberFinanceByRange, getBarberTodayAppointments } from "../../../api/barbeiro/barbeiro.service";
-import { attendAppointment, cancelAppointment } from "../../../api/barbeiro/barbeiro.service";
+import { attendAppointment, cancelAppointment, createManualAppointment, getMyTimeSlots } from "../../../api/barbeiro/barbeiro.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
-import type { BarberAppointment } from "../../../api/barbeiro/types";
+import type { BarberAppointment, TimeSlot } from "../../../api/barbeiro/types";
+import type { Service } from "../../servicos/types";
+import { formatWhatsapp, normalizeCustomerName, onlyLettersAndSpaces } from "../../../utils/customerInput";
 
 const statusColors: Record<string, "primary" | "success" | "error"> = {
   SCHEDULED: "primary",
@@ -52,6 +57,24 @@ function formatTime(timeStr: string) {
   }
 }
 
+function getSlotDate(slot: TimeSlot): string {
+  return slot.date || slot.data || "";
+}
+
+function formatSlotLabel(slot: TimeSlot) {
+  const value = getSlotDate(slot);
+  if (!value) return "Horário sem data";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("pt-BR", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -68,6 +91,8 @@ function formatDateForApi(date: Date) {
 
 export default function AgendaBarbeiroPage() {
   const [appointments, setAppointments] = useState<BarberAppointment[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [servicePrices, setServicePrices] = useState<Record<string, number>>({});
   const [selectedAppointment, setSelectedAppointment] = useState<BarberAppointment | null>(null);
   const [dailyRevenue, setDailyRevenue] = useState(0);
@@ -75,6 +100,15 @@ export default function AgendaBarbeiroPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [manualDialogOpen, setManualDialogOpen] = useState(false);
+  const [manualLoading, setManualLoading] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    customerName: "",
+    customerWhatsapp: "",
+    serviceId: "",
+    timeId: "",
+  });
+  const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -84,13 +118,16 @@ export default function AgendaBarbeiroPage() {
       setLoading(true);
       setError(null);
       const today = formatDateForApi(new Date());
-      const [appointmentsData, financeData, servicesData] = await Promise.all([
+      const [appointmentsData, financeData, servicesData, timeSlotsData] = await Promise.all([
         getBarberTodayAppointments(),
         getBarberFinanceByRange(today, today),
         getServices().catch(() => []),
+        getMyTimeSlots().catch(() => []),
       ]);
       const revenueAppointments = financeData.appointments || [];
       setAppointments(appointmentsData || []);
+      setServices(servicesData);
+      setTimeSlots(timeSlotsData.filter((slot) => slot.disponible !== false));
       setServicePrices(
         servicesData.reduce<Record<string, number>>((prices, service) => {
           const value = typeof service.preço === "string" ? Number(service.preço) : service.preço;
@@ -139,7 +176,7 @@ export default function AgendaBarbeiroPage() {
     day: "numeric",
     month: isMobile ? "2-digit" : "long",
   });
-  const selectedPrice = selectedAppointment ? servicePrices[selectedAppointment.serviceId] : undefined;
+  const selectedPrice = selectedAppointment ? selectedAppointment.price ?? servicePrices[selectedAppointment.serviceId] : undefined;
 
   const formatDate = (timeStr: string) => {
     try {
@@ -192,9 +229,55 @@ export default function AgendaBarbeiroPage() {
     }
   };
 
+
+  const resetManualForm = () => {
+    setManualForm({ customerName: "", customerWhatsapp: "", serviceId: "", timeId: "" });
+  };
+
+  const handleManualSubmit = async () => {
+    const customerName = normalizeCustomerName(manualForm.customerName);
+    const customerWhatsapp = manualForm.customerWhatsapp.replace(/\D/g, "");
+
+    if (!customerName || customerName.length < 2) {
+      setError("Informe o nome do cliente");
+      return;
+    }
+    if (customerWhatsapp.length < 10) {
+      setError("Informe um WhatsApp válido");
+      return;
+    }
+    if (!manualForm.serviceId || !manualForm.timeId) {
+      setError("Selecione serviço e horário");
+      return;
+    }
+
+    try {
+      setManualLoading(true);
+      setError(null);
+      await createManualAppointment({
+        customerName,
+        customerWhatsapp,
+        serviceId: manualForm.serviceId,
+        timeId: manualForm.timeId,
+      });
+      setManualDialogOpen(false);
+      resetManualForm();
+      setSuccess("Agendamento criado para o cliente sem conta.");
+      await loadAppointments();
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === "object" && "message" in err
+        ? (err as { message: string }).message
+        : "Erro ao criar agendamento";
+      setError(errorMessage);
+    } finally {
+      setManualLoading(false);
+    }
+  };
+
   return (
     <Box sx={{ width: "100%", maxWidth: 760, mx: "auto", pb: 2 }}>
       <FeedbackBanner message={error} severity="error" onClose={() => setError(null)} />
+      <FeedbackBanner message={success} severity="success" onClose={() => setSuccess(null)} />
 
       <Box sx={{ mb: { xs: 2, sm: 3 } }}>
         <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
@@ -211,16 +294,26 @@ export default function AgendaBarbeiroPage() {
         >
           Hoje
         </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            {todayLabel}
-          </Typography>
-          <Chip
-            label={`${appointments.length} no dia`}
-            size="small"
-            variant="outlined"
-            sx={{ flexShrink: 0 }}
-          />
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              {todayLabel}
+            </Typography>
+            <Chip
+              label={`${appointments.length} no dia`}
+              size="small"
+              variant="outlined"
+              sx={{ mt: 1 }}
+            />
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setManualDialogOpen(true)}
+            sx={{ borderRadius: 999, px: { xs: 1.5, sm: 2.5 }, flexShrink: 0 }}
+          >
+            {isMobile ? "Agendar" : "Agendar cliente"}
+          </Button>
         </Box>
       </Box>
 
@@ -565,6 +658,89 @@ export default function AgendaBarbeiroPage() {
             </DialogActions>
           </>
         )}
+      </Dialog>
+
+      <Dialog
+        open={manualDialogOpen}
+        onClose={() => !manualLoading && setManualDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{ sx: { borderRadius: 2, m: { xs: 1.5, sm: 3 } } }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+            Novo agendamento
+          </Typography>
+          <Typography variant="h6" fontWeight={800}>
+            Cliente sem conta
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Nome do cliente"
+              value={manualForm.customerName}
+              onChange={(event) => setManualForm((form) => ({ ...form, customerName: onlyLettersAndSpaces(event.target.value) }))}
+              onBlur={() => setManualForm((form) => ({ ...form, customerName: normalizeCustomerName(form.customerName) }))}
+              fullWidth
+              autoFocus
+              inputProps={{ inputMode: "text" }}
+            />
+            <TextField
+              label="WhatsApp"
+              value={manualForm.customerWhatsapp}
+              onChange={(event) => setManualForm((form) => ({ ...form, customerWhatsapp: formatWhatsapp(event.target.value) }))}
+              placeholder="(11) 91234-5678"
+              fullWidth
+              inputProps={{ inputMode: "tel" }}
+            />
+            <TextField
+              select
+              label="Serviço"
+              value={manualForm.serviceId}
+              onChange={(event) => setManualForm((form) => ({ ...form, serviceId: event.target.value }))}
+              fullWidth
+            >
+              {services.map((service) => (
+                <MenuItem key={service.id} value={service.id}>
+                  {service.nome} · {formatCurrency(Number(service.preço) || 0)}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              label="Horário disponível"
+              value={manualForm.timeId}
+              onChange={(event) => setManualForm((form) => ({ ...form, timeId: event.target.value }))}
+              fullWidth
+              helperText={timeSlots.length === 0 ? "Crie horários disponíveis antes de agendar." : undefined}
+            >
+              {timeSlots.map((slot) => (
+                <MenuItem key={slot.id} value={slot.id}>
+                  {formatSlotLabel(slot)}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
+          <Button
+            variant="contained"
+            onClick={handleManualSubmit}
+            disabled={manualLoading || timeSlots.length === 0}
+            fullWidth
+          >
+            {manualLoading ? "Criando..." : "Criar agendamento"}
+          </Button>
+          <Button
+            variant="text"
+            onClick={() => setManualDialogOpen(false)}
+            disabled={manualLoading}
+            fullWidth
+          >
+            Fechar
+          </Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog

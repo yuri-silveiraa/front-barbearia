@@ -1,12 +1,14 @@
 export interface BarberAppointment {
   id: string;
-  clientId: string;
+  clientId?: string | null;
+  customerId?: string;
   client: string;
   barberId: string;
   barber: string;
   serviceId: string;
   service: string;
   time: string;
+  price?: number;
   status: "SCHEDULED" | "COMPLETED" | "CANCELED";
 }
 
