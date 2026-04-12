@@ -6,17 +6,27 @@ export async function getBarberTodayAppointments(): Promise<BarberAppointment[]>
   return data;
 }
 
-export async function getBarberAppointmentsByRange(start: string, end: string): Promise<BarberAppointment[]> {
-  const { data } = await api.get<BarberAppointment[]>(
-    `/barber/appointments?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
-  );
+export async function getBarberAppointmentsByRange(
+  start: string,
+  end: string,
+  serviceId?: string
+): Promise<BarberAppointment[]> {
+  const params = new URLSearchParams({ start, end });
+  if (serviceId) params.set("serviceId", serviceId);
+
+  const { data } = await api.get<BarberAppointment[]>(`/barber/appointments?${params.toString()}`);
   return data;
 }
 
-export async function getBarberFinanceByRange(start: string, end: string): Promise<BarberFinanceResponse> {
-  const { data } = await api.get<BarberFinanceResponse>(
-    `/barber/revenue?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
-  );
+export async function getBarberFinanceByRange(
+  start: string,
+  end: string,
+  serviceId?: string
+): Promise<BarberFinanceResponse> {
+  const params = new URLSearchParams({ start, end });
+  if (serviceId) params.set("serviceId", serviceId);
+
+  const { data } = await api.get<BarberFinanceResponse>(`/barber/revenue?${params.toString()}`);
   return data;
 }
 
