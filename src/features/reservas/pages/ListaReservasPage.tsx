@@ -1,52 +1,63 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
-  Paper,
-  Typography,
-  CircularProgress,
   Button,
   Chip,
-  Avatar,
+  CircularProgress,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Divider,
+  Paper,
+  Stack,
+  Typography,
   useMediaQuery,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import { cancelarReserva, getReservas } from "../../../api/reservas/reserva.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
-import type { Reserva } from "../types";
+import type { Reserva, ReservaStatus } from "../types";
+
+interface StatusConfig {
+  color: "primary" | "success" | "error";
+  label: string;
+}
+
+const statusConfig: Record<ReservaStatus, StatusConfig> = {
+  SCHEDULED: { color: "primary", label: "Agendada" },
+  COMPLETED: { color: "success", label: "Atendida" },
+  CANCELED: { color: "error", label: "Cancelada" },
+};
+
+function isFutureScheduled(reserva: Reserva) {
+  return reserva.status === "SCHEDULED" && new Date(reserva.time).getTime() >= Date.now();
+}
 
 export function ListaReservasPage() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [selectedReserva, setSelectedReserva] = useState<Reserva | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [reservaToCancel, setReservaToCancel] = useState<Reserva | null>(null);
   const [canceling, setCanceling] = useState(false);
   const navigate = useNavigate();
   const hasFetched = useRef(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const getStatusConfig = (status: string) => {
-    const configs = {
-      SCHEDULED: { color: "info" as const, bgcolor: "rgba(0, 191, 165, 0.15)", label: "Agendada" },
-      COMPLETED: { color: "success" as const, bgcolor: "rgba(76, 175, 80, 0.15)", label: "Atendida" },
-      CANCELED: { color: "error" as const, bgcolor: "rgba(244, 67, 54, 0.15)", label: "Cancelada" }
-    };
-    return configs[status as keyof typeof configs] || configs.SCHEDULED;
-  };
-
   async function carregar() {
     try {
+      setLoading(true);
       const response = await getReservas();
       setReservas(response);
       setError(null);
@@ -58,36 +69,39 @@ export function ListaReservasPage() {
     }
   }
 
-  const handleOpenCancel = (reserva: Reserva) => {
-    setReservaToCancel(reserva);
-    setCancelDialogOpen(true);
-  };
-
-  const handleCancel = async () => {
-    if (!reservaToCancel) return;
-
-    setCanceling(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      await cancelarReserva(reservaToCancel.id);
-      setSuccess("Agendamento cancelado com sucesso.");
-      await carregar();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao cancelar agendamento";
-      setError(message);
-    } finally {
-      setCanceling(false);
-      setCancelDialogOpen(false);
-      setReservaToCancel(null);
-    }
-  };
-
   useEffect(() => {
     if (hasFetched.current) return;
     hasFetched.current = true;
     carregar();
   }, []);
+
+  const counts = useMemo(
+    () => ({
+      next: reservas.filter(isFutureScheduled).length,
+      completed: reservas.filter((reserva) => reserva.status === "COMPLETED").length,
+      canceled: reservas.filter((reserva) => reserva.status === "CANCELED").length,
+    }),
+    [reservas]
+  );
+
+  const nextReserva = useMemo(
+    () =>
+      reservas
+        .filter(isFutureScheduled)
+        .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())[0] ?? null,
+    [reservas]
+  );
+
+  const orderedReservas = useMemo(() => {
+    const upcoming = reservas
+      .filter(isFutureScheduled)
+      .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+    const history = reservas
+      .filter((reserva) => !isFutureScheduled(reserva))
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+
+    return [...upcoming, ...history];
+  }, [reservas]);
 
   const formatReservaDate = (value: string) =>
     new Date(value).toLocaleString("pt-BR", {
@@ -95,10 +109,45 @@ export function ListaReservasPage() {
       day: "numeric",
       month: isMobile ? "2-digit" : "long",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
 
-  if (loading) {
+  const formatReservaDay = (value: string) =>
+    new Date(value).toLocaleDateString("pt-BR", {
+      weekday: isMobile ? "short" : "long",
+      day: "numeric",
+      month: isMobile ? "2-digit" : "long",
+      year: "numeric",
+    });
+
+  const formatReservaTime = (value: string) =>
+    new Date(value).toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  const handleCancel = async () => {
+    if (!selectedReserva) return;
+
+    setCanceling(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      await cancelarReserva(selectedReserva.id);
+      setSuccess("Agendamento cancelado com sucesso.");
+      setSelectedReserva(null);
+      await carregar();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao cancelar agendamento";
+      setError(message);
+    } finally {
+      setCanceling(false);
+      setCancelDialogOpen(false);
+    }
+  };
+
+  if (loading && reservas.length === 0) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
         <CircularProgress />
@@ -107,172 +156,331 @@ export function ListaReservasPage() {
   }
 
   return (
-    <Box sx={{ px: { xs: 1, sm: 2 } }}>
+    <Box sx={{ width: "100%", maxWidth: 760, mx: "auto", pb: 2 }}>
       <FeedbackBanner message={error} severity="error" onClose={() => setError(null)} />
       <FeedbackBanner message={success} severity="success" onClose={() => setSuccess(null)} />
-      <Box sx={{ 
-        display: "flex", 
-        flexDirection: { xs: "column", sm: "row" },
-        justifyContent: "space-between", 
-        alignItems: { xs: "flex-start", sm: "center" }, 
-        mb: 3,
-        gap: 2
-      }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700 }}>
-            Meus agendamentos
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Acompanhe seus horários marcados
-          </Typography>
-        </Box>
 
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate("/reservas/create")}
-          sx={{ px: { xs: 2, sm: 3 }, py: 1, fontWeight: 600, width: { xs: "100%", sm: "auto" } }}
-        >
-          Novo agendamento
-        </Button>
-      </Box>
-
-      {reservas.length === 0 ? (
-        <Paper
-          elevation={0}
+      <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+        <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+          Reservas
+        </Typography>
+        <Typography
+          variant="h4"
           sx={{
-            p: { xs: 4, sm: 6 },
-            textAlign: "center",
-            borderRadius: 3,
-            backgroundColor: "background.paper",
-            border: "2px dashed",
-            borderColor: "divider"
+            fontSize: { xs: 28, sm: 34 },
+            fontWeight: 800,
+            lineHeight: 1.05,
+            mb: 1,
           }}
         >
-          <Box
-            sx={{
-              width: { xs: 60, sm: 80 },
-              height: { xs: 60, sm: 80 },
-              borderRadius: "50%",
-              bgcolor: "action.hover",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              mx: "auto",
-              mb: 2
-            }}
-          >
-            <ScheduleIcon sx={{ fontSize: { xs: 30, sm: 40 }, color: "text.secondary" }} />
-          </Box>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            Nenhum agendamento ainda
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Marque seu primeiro atendimento na barbearia
+          Meus agendamentos
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Acompanhe seus horários na barbearia.
           </Typography>
           <Button
             variant="contained"
+            size="small"
             startIcon={<AddIcon />}
             onClick={() => navigate("/reservas/create")}
+            sx={{ flexShrink: 0 }}
           >
+            Novo
+          </Button>
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 1,
+          mb: 2,
+        }}
+      >
+        {[
+          { label: "Próximos", value: counts.next, icon: <ScheduleIcon fontSize="small" /> },
+          { label: "Atendidos", value: counts.completed, icon: <ContentCutIcon fontSize="small" /> },
+          { label: "Cancelados", value: counts.canceled, icon: <CalendarMonthIcon fontSize="small" /> },
+        ].map((item) => (
+          <Paper
+            key={item.label}
+            elevation={0}
+            sx={{
+              p: { xs: 1.25, sm: 1.75 },
+              minHeight: 88,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 2,
+              bgcolor: "background.paper",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box sx={{ color: "text.secondary", display: "flex" }}>{item.icon}</Box>
+            <Box>
+              <Typography variant="h6" fontWeight={800} lineHeight={1}>
+                {item.value}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {item.label}
+              </Typography>
+            </Box>
+          </Paper>
+        ))}
+      </Box>
+
+      {nextReserva && (
+        <Paper
+          elevation={0}
+          onClick={() => setSelectedReserva(nextReserva)}
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            mb: 2,
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "rgba(37, 208, 179, 0.45)",
+            bgcolor: "rgba(0, 191, 165, 0.08)",
+            cursor: "pointer",
+          }}
+        >
+          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+            Próximo agendamento
+          </Typography>
+          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2, mt: 0.5 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="h5" fontWeight={800}>
+                {nextReserva.service}
+              </Typography>
+              <Typography fontWeight={700} noWrap>
+                {nextReserva.barber}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" noWrap>
+                {formatReservaDate(nextReserva.time)}
+              </Typography>
+            </Box>
+            <ArrowForwardIcon color="primary" sx={{ alignSelf: "center", flexShrink: 0 }} />
+          </Box>
+        </Paper>
+      )}
+
+      {orderedReservas.length === 0 ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            textAlign: "center",
+            borderRadius: 2,
+            border: "1px dashed",
+            borderColor: "divider",
+            bgcolor: "background.paper",
+          }}
+        >
+          <ScheduleIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
+          <Typography variant="h6" color="text.secondary">
+            Nenhum agendamento ainda
+          </Typography>
+          <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+            Marque seu primeiro atendimento na barbearia.
+          </Typography>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate("/reservas/create")}>
             Criar agendamento
           </Button>
         </Paper>
       ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {reservas.map((reserva) => {
-            const statusConfig = getStatusConfig(reserva.status);
-            
-            return (
-              <Paper
-                key={reserva.id}
-                elevation={0}
-                sx={{
-                  p: { xs: 2, sm: 3 },
-                  borderRadius: 3,
-                  backgroundColor: "background.paper",
-                  border: "1px solid",
-                  borderColor: "divider",
-                  transition: "all 0.2s ease",
-                  "&:hover": {
-                    borderColor: "primary.main",
-                    boxShadow: "0 4px 20px rgba(0, 191, 165, 0.15)"
-                  }
-                }}
-              >
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexDirection: { xs: "column", sm: "row" }, gap: 2 }}>
-                  <Box sx={{ display: "flex", gap: 2, flex: 1 }}>
-                    <Avatar
-                      sx={{
-                        width: { xs: 44, sm: 56 },
-                        height: { xs: 44, sm: 56 },
-                        bgcolor: "primary.main",
-                        fontSize: { xs: "1rem", sm: "1.5rem" }
-                      }}
-                    >
-                      <ContentCutIcon />
-                    </Avatar>
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            overflow: "hidden",
+          }}
+        >
+          <Box sx={{ p: { xs: 2, sm: 2.5 }, pb: 1 }}>
+            <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+              Lista
+            </Typography>
+            <Typography variant="subtitle1" fontWeight={700}>
+              Todos os agendamentos
+            </Typography>
+          </Box>
 
-                    <Box sx={{ minWidth: 0, flex: 1 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5, fontSize: { xs: "1rem", sm: "1.25rem" } }}>
-                        {reserva.service}
+          <Stack divider={<Divider flexItem />}>
+            {orderedReservas.map((reserva) => {
+              const config = statusConfig[reserva.status];
+
+              return (
+                <Box
+                  key={reserva.id}
+                  component="button"
+                  onClick={() => setSelectedReserva(reserva)}
+                  sx={{
+                    width: "100%",
+                    border: 0,
+                    bgcolor: "transparent",
+                    color: "inherit",
+                    textAlign: "left",
+                    p: { xs: 2, sm: 2.5 },
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0, 1fr) auto",
+                    gap: 1.5,
+                    alignItems: "center",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s ease",
+                    "&:hover": { bgcolor: "action.hover" },
+                  }}
+                >
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography fontWeight={800} noWrap>
+                      {reserva.service}
+                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.75 }}>
+                      <PersonIcon fontSize="small" color="action" />
+                      <Typography variant="body2" color="text.secondary" noWrap>
+                        {reserva.barber}
                       </Typography>
-
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
-                        <PersonIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-                        <Typography variant="body2" color="text.secondary">
-                          {reserva.barber}
-                        </Typography>
-                      </Box>
-
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        <ScheduleIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-                        <Typography variant="body2" color="text.secondary">
-                          {formatReservaDate(reserva.time)}
-                        </Typography>
-                      </Box>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.25 }}>
+                      <ScheduleIcon fontSize="small" color="action" />
+                      <Typography variant="body2" color="text.secondary" noWrap>
+                        {formatReservaDate(reserva.time)}
+                      </Typography>
                     </Box>
                   </Box>
-
-                  <Chip
-                    label={statusConfig.label}
-                    color={statusConfig.color}
-                    size="small"
-                    sx={{ fontWeight: 600, alignSelf: { xs: "flex-start", sm: "center" } }}
-                  />
-                </Box>
-
-                {reserva.status === "SCHEDULED" && (
-                  <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-                    <Button
+                  <Stack spacing={1} alignItems="flex-end">
+                    <Chip
+                      label={config.label}
+                      color={config.color}
                       size="small"
-                      color="error"
-                      variant="outlined"
-                      onClick={() => handleOpenCancel(reserva)}
-                    >
-                      Cancelar agendamento
-                    </Button>
-                  </Box>
-                )}
-              </Paper>
-            );
-          })}
-        </Box>
+                      variant={reserva.status === "SCHEDULED" ? "filled" : "outlined"}
+                      sx={{ fontWeight: 700 }}
+                    />
+                    <ArrowForwardIcon color="primary" fontSize="small" />
+                  </Stack>
+                </Box>
+              );
+            })}
+          </Stack>
+        </Paper>
       )}
 
-      <Dialog open={cancelDialogOpen} onClose={() => !canceling && setCancelDialogOpen(false)}>
+      <Dialog
+        open={!!selectedReserva}
+        onClose={() => !canceling && setSelectedReserva(null)}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            m: { xs: 1.5, sm: 3 },
+          },
+        }}
+      >
+        {selectedReserva && (
+          <>
+            <DialogTitle sx={{ pb: 1 }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2, alignItems: "flex-start" }}>
+                <Box>
+                  <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+                    Agendamento
+                  </Typography>
+                  <Typography variant="h6" fontWeight={800}>
+                    {selectedReserva.service}
+                  </Typography>
+                </Box>
+                <Chip
+                  label={statusConfig[selectedReserva.status].label}
+                  color={statusConfig[selectedReserva.status].color}
+                  size="small"
+                  sx={{ fontWeight: 700, mt: 0.5 }}
+                />
+              </Box>
+            </DialogTitle>
+
+            <DialogContent sx={{ pt: 1 }}>
+              <Stack spacing={2} divider={<Divider flexItem />}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5 }}>
+                  <CalendarMonthIcon color="primary" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Dia e horário
+                    </Typography>
+                    <Typography fontWeight={800}>{formatReservaTime(selectedReserva.time)}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {formatReservaDay(selectedReserva.time)}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5 }}>
+                  <PersonIcon color="primary" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Barbeiro
+                    </Typography>
+                    <Typography fontWeight={800}>{selectedReserva.barber}</Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5 }}>
+                  <ContentCutIcon color="primary" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Serviço
+                    </Typography>
+                    <Typography fontWeight={800}>{selectedReserva.service}</Typography>
+                  </Box>
+                </Box>
+              </Stack>
+            </DialogContent>
+
+            <DialogActions sx={{ p: 2, pt: 0, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
+              {selectedReserva.status === "SCHEDULED" && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => setCancelDialogOpen(true)}
+                  disabled={canceling}
+                  fullWidth
+                >
+                  Cancelar
+                </Button>
+              )}
+              <Button
+                variant={selectedReserva.status === "SCHEDULED" ? "text" : "contained"}
+                onClick={() => setSelectedReserva(null)}
+                disabled={canceling}
+                fullWidth
+              >
+                Fechar
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
+
+      <Dialog
+        open={cancelDialogOpen}
+        onClose={() => !canceling && setCancelDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
         <DialogTitle>Cancelar agendamento</DialogTitle>
         <DialogContent>
-          <Typography>
+          <DialogContentText>
             Tem certeza que deseja cancelar o agendamento de{" "}
-            <strong>{reservaToCancel?.service}</strong>?
-          </Typography>
+            <strong>{selectedReserva?.service}</strong>?
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCancelDialogOpen(false)} disabled={canceling}>
             Voltar
           </Button>
-          <Button onClick={handleCancel} color="error" disabled={canceling}>
+          <Button onClick={handleCancel} color="error" disabled={canceling} autoFocus>
             {canceling ? "Cancelando..." : "Confirmar cancelamento"}
           </Button>
         </DialogActions>
