@@ -3,7 +3,7 @@ import { LoginPage } from "./../features/auth/pages/LoginPage";
 import { CadastroPage } from "./../features/auth/pages/CadastroPage";
 import VerificarEmailPage from "../features/auth/pages/VerificarEmailPage";
 import { ListaReservasPage } from "./../features/reservas/pages/ListaReservasPage";
-import { PrivateRoute, IndexRedirect } from "./privateRoutes";
+import { PrivateRoute, IndexRedirect, RoleRoute } from "./privateRoutes";
 import { MainLayout } from "./../layouts/MainLayout";
 import CriarReservaPage from "../features/reservas/pages/CriarReservaPage";
 import { PerfilPage } from "../features/perfil/pages/PerfilPage";
@@ -33,17 +33,87 @@ export default function AppRoutes() {
           }
         >
           <Route index element={<IndexRedirect />} />
-          <Route path="home" element={<HomeClientePage />} />
-          <Route path="reservas" element={<ListaReservasPage />} />
-          <Route path="reservas/create" element={<CriarReservaPage />} />
+          <Route
+            path="home"
+            element={
+              <RoleRoute allowedTypes={["CLIENT"]}>
+                <HomeClientePage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="reservas"
+            element={
+              <RoleRoute allowedTypes={["CLIENT"]}>
+                <ListaReservasPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="reservas/create"
+            element={
+              <RoleRoute allowedTypes={["CLIENT"]}>
+                <CriarReservaPage />
+              </RoleRoute>
+            }
+          />
           <Route path="perfil" element={<PerfilPage />} />
-          <Route path="agenda" element={<AgendaBarbeiroPage />} />
-          <Route path="agenda/:id" element={<DetalhesAgendamentoPage />} />
-          <Route path="agenda/periodo" element={<AgendaBarbeiroPeriodoPage />} />
-          <Route path="horarios" element={<HorariosPage />} />
-          <Route path="servicos" element={<ServicosPage />} />
-          <Route path="barbeiros" element={<BarbeirosPage />} />
-          <Route path="financeiro" element={<FinanceiroPage />} />
+          <Route
+            path="agenda"
+            element={
+              <RoleRoute allowedTypes={["BARBER"]}>
+                <AgendaBarbeiroPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="agenda/:id"
+            element={
+              <RoleRoute allowedTypes={["BARBER"]}>
+                <DetalhesAgendamentoPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="agenda/periodo"
+            element={
+              <RoleRoute allowedTypes={["BARBER"]}>
+                <AgendaBarbeiroPeriodoPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="horarios"
+            element={
+              <RoleRoute allowedTypes={["BARBER"]}>
+                <HorariosPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="servicos"
+            element={
+              <RoleRoute allowedTypes={["BARBER"]}>
+                <ServicosPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="barbeiros"
+            element={
+              <RoleRoute allowedTypes={["BARBER"]} requireAdmin>
+                <BarbeirosPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="financeiro"
+            element={
+              <RoleRoute allowedTypes={["BARBER"]}>
+                <FinanceiroPage />
+              </RoleRoute>
+            }
+          />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
