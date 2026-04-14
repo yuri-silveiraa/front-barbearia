@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -22,6 +23,7 @@ import {
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EmailIcon from "@mui/icons-material/Email";
 import EditIcon from "@mui/icons-material/Edit";
+import ImageIcon from "@mui/icons-material/Image";
 import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
@@ -41,6 +43,9 @@ const profileSchema = z.object({
 
 type ProfileForm = z.infer<typeof profileSchema>;
 
+const MAX_PROFILE_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
 export function PerfilPage() {
   const { user, updateUser, deleteUser } = useAuth();
   const navigate = useNavigate();
@@ -50,6 +55,10 @@ export function PerfilPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(user?.profileImageUrl ?? null);
+  const [removeProfileImage, setRemoveProfileImage] = useState(false);
+  const [profileImageError, setProfileImageError] = useState("");
 
   const {
     register,
@@ -71,7 +80,57 @@ export function PerfilPage() {
       email: user?.email || "",
       telephone: user?.phone || "",
     });
+    setProfileImageFile(null);
+    setProfileImagePreview(user?.profileImageUrl ?? null);
+    setRemoveProfileImage(false);
+    setProfileImageError("");
   }, [user, reset, editOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (profileImagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(profileImagePreview);
+      }
+    };
+  }, [profileImagePreview]);
+
+  const handleProfileImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) return;
+
+    if (!ALLOWED_PROFILE_IMAGE_TYPES.includes(file.type)) {
+      setProfileImageError("Use uma imagem JPG, PNG ou WEBP.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_PROFILE_IMAGE_SIZE_BYTES) {
+      setProfileImageError("A imagem deve ter no máximo 5MB.");
+      event.target.value = "";
+      return;
+    }
+
+    if (profileImagePreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(profileImagePreview);
+    }
+
+    setProfileImageError("");
+    setProfileImageFile(file);
+    setRemoveProfileImage(false);
+    setProfileImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveProfileImage = () => {
+    if (profileImagePreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(profileImagePreview);
+    }
+
+    setProfileImageFile(null);
+    setProfileImagePreview(null);
+    setProfileImageError("");
+    setRemoveProfileImage(Boolean(user?.profileImageUrl));
+  };
 
   const onSubmit = async (data: ProfileForm) => {
     setError(null);
@@ -81,8 +140,12 @@ export function PerfilPage() {
         name: formatName(data.name),
         email: data.email,
         telephone: onlyDigits(data.telephone),
+        profileImageFile,
+        removeProfileImage,
       });
       setSuccess("Perfil atualizado com sucesso.");
+      setProfileImageFile(null);
+      setRemoveProfileImage(false);
       setEditOpen(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao atualizar perfil";
@@ -176,6 +239,8 @@ export function PerfilPage() {
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Avatar
+              src={user?.profileImageUrl || undefined}
+              alt={user?.name || "Usuário"}
               sx={{
                 width: { xs: 72, sm: 88 },
                 height: { xs: 72, sm: 88 },
@@ -340,6 +405,64 @@ export function PerfilPage() {
         <DialogContent>
           <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ pt: 1 }}>
             <Stack spacing={2}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  bgcolor: "background.default",
+                }}
+              >
+                <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", mb: 1.5 }}>
+                  <Avatar
+                    src={profileImagePreview || undefined}
+                    alt={user?.name || "Usuário"}
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      fontSize: 22,
+                      fontWeight: 800,
+                      bgcolor: "primary.main",
+                      color: "primary.contrastText",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {user?.name ? getInitials(user.name) : "U"}
+                  </Avatar>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography fontWeight={800}>Foto de perfil</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      JPG, PNG ou WEBP com até 5MB.
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                  <Button variant="outlined" component="label" startIcon={<ImageIcon />} fullWidth>
+                    {profileImagePreview ? "Trocar foto" : "Selecionar foto"}
+                    <input
+                      hidden
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleProfileImageChange}
+                    />
+                  </Button>
+
+                  {profileImagePreview && (
+                    <Button color="inherit" onClick={handleRemoveProfileImage} startIcon={<DeleteOutlineIcon />} fullWidth>
+                      Remover foto
+                    </Button>
+                  )}
+                </Stack>
+
+                {profileImageError && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {profileImageError}
+                  </Alert>
+                )}
+              </Box>
+
               <TextField
                 label="Nome"
                 fullWidth
@@ -371,7 +494,7 @@ export function PerfilPage() {
           <Button onClick={() => setEditOpen(false)} disabled={isSubmitting} fullWidth>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit(onSubmit)} variant="contained" disabled={isSubmitting} fullWidth>
+          <Button onClick={handleSubmit(onSubmit)} variant="contained" disabled={isSubmitting || Boolean(profileImageError)} fullWidth>
             {isSubmitting ? "Salvando..." : "Salvar"}
           </Button>
         </DialogActions>

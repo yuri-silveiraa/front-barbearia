@@ -4,6 +4,7 @@ export type User = {
   name: string;
   email: string;
   phone?: string;
+  profileImageUrl?: string | null;
   type?: "BARBER" | "CLIENT";
   isAdmin?: boolean;
 };
@@ -31,4 +32,6 @@ export type UpdateProfileData = {
   name?: string;
   email?: string;
   telephone?: string;
+  profileImageFile?: File | null;
+  removeProfileImage?: boolean;
 };

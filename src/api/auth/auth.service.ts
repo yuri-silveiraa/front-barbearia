@@ -2,6 +2,7 @@ import { api } from "../http";
 import type { LoginData, RegisterData } from "./schema";
 import type { LoginResponse } from "./types";
 import type { UpdateProfileData, User } from "../../features/auth/types";
+import { fileToBase64, resolveApiImageUrl } from "../../utils/apiImage";
 
 type ApiUser = {
   id: string;
@@ -12,6 +13,7 @@ type ApiUser = {
   phone?: string;
   barber?: { isAdmin?: boolean };
   isAdmin?: boolean;
+  profileImageUrl?: string | null;
 };
 
 function mapUser(data: ApiUser): User {
@@ -21,6 +23,7 @@ function mapUser(data: ApiUser): User {
     email: data.email,
     type: data.type,
     phone: data.telephone ?? data.phone,
+    profileImageUrl: resolveApiImageUrl(data.profileImageUrl),
     isAdmin: data.isAdmin ?? data.barber?.isAdmin ?? false,
   };
 }
@@ -97,7 +100,19 @@ export async function resendVerificationCode(email: string): Promise<{ message: 
 
 export async function updateMe(data: UpdateProfileData): Promise<{ user: User }> {
   try {
-    const response = await api.patch<{ user: ApiUser }>("/user/me", data);
+    const payload: Record<string, unknown> = {};
+    if (data.name !== undefined) payload.name = data.name;
+    if (data.email !== undefined) payload.email = data.email;
+    if (data.telephone !== undefined) payload.telephone = data.telephone;
+    if (data.profileImageFile) {
+      payload.profileImageBase64 = await fileToBase64(data.profileImageFile);
+      payload.profileImageMimeType = data.profileImageFile.type;
+    }
+    if (data.removeProfileImage !== undefined) {
+      payload.removeProfileImage = data.removeProfileImage;
+    }
+
+    const response = await api.patch<{ user: ApiUser }>("/user/me", payload);
     return { user: mapUser(response.data.user) };
   } catch (error) {
     if (error && typeof error === "object" && "response" in error) {

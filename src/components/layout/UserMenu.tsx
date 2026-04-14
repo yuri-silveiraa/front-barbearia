@@ -71,6 +71,8 @@ export function UserMenu({ user }: UserMenuProps) {
         }}
       >
         <Avatar
+          src={user?.profileImageUrl || undefined}
+          alt={user?.name || "Usuário"}
           sx={{
             width: 36,
             height: 36,

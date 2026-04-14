@@ -1,6 +1,7 @@
 import { api } from "../http";
 import type { Reserva } from "../../features/reservas/types";
 import type { Barber, Service, TimeSlot, ReservaPayload } from "./types";
+import { resolveApiImageUrl } from "../../utils/apiImage";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -119,11 +120,19 @@ function readBoolean(source: UnknownRecord, paths: string[], fallback = true): b
 }
 
 function normalizeBarber(raw: UnknownRecord): Barber {
+  const profileImageUrl = readOptionalString(raw, [
+    "profileImageUrl",
+    "fotoPerfilUrl",
+    "avatarUrl",
+    "user.profileImageUrl",
+  ]);
+
   return {
     id: readString(raw, ["id", "_id", "uuid", "barberId"]),
     name: readString(raw, ["name", "nome", "fullName", "full_name", "user.name"], "Barbeiro sem nome"),
     email: readString(raw, ["email", "user.email"]),
     phone: readOptionalString(raw, ["phone", "telefone", "user.phone"]),
+    profileImageUrl: resolveApiImageUrl(profileImageUrl),
     specialties: Array.isArray(raw.specialties)
       ? raw.specialties.filter((item): item is string => typeof item === "string")
       : undefined,

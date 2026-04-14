@@ -3,6 +3,7 @@ export interface Barber {
   name: string;
   email: string;
   phone?: string;
+  profileImageUrl?: string | null;
   specialties?: string[];
   available?: boolean;
 }

@@ -84,7 +84,11 @@ const SelectBarber: FC<SelectBarberProps> = ({
                 "&:hover": loading ? undefined : { borderColor: "primary.main" },
               }}
             >
-              <Avatar sx={{ width: 44, height: 44, bgcolor: selected ? "primary.main" : "action.hover" }}>
+              <Avatar
+                src={barber.profileImageUrl || undefined}
+                alt={barber.name}
+                sx={{ width: 44, height: 44, bgcolor: selected ? "primary.main" : "action.hover" }}
+              >
                 {getInitials(barber.name)}
               </Avatar>
               <Box sx={{ minWidth: 0 }}>
