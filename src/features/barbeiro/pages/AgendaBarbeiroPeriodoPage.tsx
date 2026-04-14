@@ -25,6 +25,7 @@ import DoneAllIcon from "@mui/icons-material/DoneAll";
 import EventBusyIcon from "@mui/icons-material/EventBusy";
 import PaidIcon from "@mui/icons-material/Paid";
 import PersonIcon from "@mui/icons-material/Person";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -34,6 +35,7 @@ import { getServices } from "../../../api/servicos/servico.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import type { BarberAppointment } from "../../../api/barbeiro/types";
 import type { Service } from "../../servicos/types";
+import { buildWhatsappUrl, formatWhatsappDisplay } from "../../../utils/customerInput";
 
 const statusColors: Record<string, "primary" | "success" | "error"> = {
   SCHEDULED: "primary",
@@ -155,6 +157,11 @@ export default function AgendaBarbeiroPeriodoPage() {
   );
   const appliedServiceLabel = appliedService?.nome ?? "Todos os serviços";
   const selectedPrice = selectedAppointment?.price;
+  const selectedWhatsappUrl = selectedAppointment ? buildWhatsappUrl(selectedAppointment.clientTelephone) : null;
+  const selectedWhatsappLabel =
+    selectedAppointment && selectedAppointment.clientTelephone
+      ? formatWhatsappDisplay(selectedAppointment.clientTelephone)
+      : "WhatsApp não informado";
 
   const handleApplyFilter = () => {
     if (endDate.isBefore(startDate, "day")) {
@@ -480,6 +487,32 @@ export default function AgendaBarbeiroPeriodoPage() {
                       Cliente
                     </Typography>
                     <Typography fontWeight={800}>{selectedAppointment.client}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {selectedWhatsappLabel}
+                    </Typography>
+                    {selectedWhatsappUrl && (
+                      <Button
+                        href={selectedWhatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        startIcon={<WhatsAppIcon />}
+                        variant="outlined"
+                        size="small"
+                        fullWidth={isMobile}
+                        sx={{
+                          mt: 1,
+                          justifyContent: "center",
+                          borderColor: "rgba(37, 211, 102, 0.45)",
+                          color: "#128C7E",
+                          "&:hover": {
+                            borderColor: "#128C7E",
+                            bgcolor: "rgba(37, 211, 102, 0.08)",
+                          },
+                        }}
+                      >
+                        Chamar no WhatsApp
+                      </Button>
+                    )}
                   </Box>
                 </Box>
 

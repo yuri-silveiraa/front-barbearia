@@ -28,13 +28,20 @@ import DoneAllIcon from "@mui/icons-material/DoneAll";
 import EventBusyIcon from "@mui/icons-material/EventBusy";
 import PaidIcon from "@mui/icons-material/Paid";
 import PersonIcon from "@mui/icons-material/Person";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import { getServices } from "../../../api/servicos/servico.service";
 import { getBarberFinanceByRange, getBarberTodayAppointments } from "../../../api/barbeiro/barbeiro.service";
 import { attendAppointment, cancelAppointment, createManualAppointment, getMyTimeSlots } from "../../../api/barbeiro/barbeiro.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import type { BarberAppointment, TimeSlot } from "../../../api/barbeiro/types";
 import type { Service } from "../../servicos/types";
-import { formatWhatsapp, normalizeCustomerName, onlyLettersAndSpaces } from "../../../utils/customerInput";
+import {
+  buildWhatsappUrl,
+  formatWhatsapp,
+  formatWhatsappDisplay,
+  normalizeCustomerName,
+  onlyLettersAndSpaces,
+} from "../../../utils/customerInput";
 
 const statusColors: Record<string, "primary" | "success" | "error"> = {
   SCHEDULED: "primary",
@@ -177,6 +184,11 @@ export default function AgendaBarbeiroPage() {
     month: isMobile ? "2-digit" : "long",
   });
   const selectedPrice = selectedAppointment ? selectedAppointment.price ?? servicePrices[selectedAppointment.serviceId] : undefined;
+  const selectedWhatsappUrl = selectedAppointment ? buildWhatsappUrl(selectedAppointment.clientTelephone) : null;
+  const selectedWhatsappLabel =
+    selectedAppointment && selectedAppointment.clientTelephone
+      ? formatWhatsappDisplay(selectedAppointment.clientTelephone)
+      : "WhatsApp não informado";
 
   const formatDate = (timeStr: string) => {
     try {
@@ -606,6 +618,32 @@ export default function AgendaBarbeiroPage() {
                       Cliente
                     </Typography>
                     <Typography fontWeight={800}>{selectedAppointment.client}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {selectedWhatsappLabel}
+                    </Typography>
+                    {selectedWhatsappUrl && (
+                      <Button
+                        href={selectedWhatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        startIcon={<WhatsAppIcon />}
+                        variant="outlined"
+                        size="small"
+                        fullWidth={isMobile}
+                        sx={{
+                          mt: 1,
+                          justifyContent: "center",
+                          borderColor: "rgba(37, 211, 102, 0.45)",
+                          color: "#128C7E",
+                          "&:hover": {
+                            borderColor: "#128C7E",
+                            bgcolor: "rgba(37, 211, 102, 0.08)",
+                          },
+                        }}
+                      >
+                        Chamar no WhatsApp
+                      </Button>
+                    )}
                   </Box>
                 </Box>
 

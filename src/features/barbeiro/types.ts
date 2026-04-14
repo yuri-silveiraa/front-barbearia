@@ -3,6 +3,7 @@ export interface BarberAppointment {
   clientId?: string | null;
   customerId?: string;
   client: string;
+  clientTelephone?: string;
   barberId: string;
   barber: string;
   serviceId: string;

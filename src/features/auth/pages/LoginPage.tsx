@@ -39,7 +39,7 @@ export function LoginPage() {
     if (loadingAuth || !user) return;
 
     if (user.type === "BARBER") {
-      navigate(user.isAdmin ? "/servicos" : "/agenda", { replace: true });
+      navigate("/agenda", { replace: true });
     } else {
       navigate("/home", { replace: true });
     }
