@@ -1,11 +1,15 @@
 import {
+  Box,
+  Button,
   Card,
   CardContent,
+  Chip,
+  Stack,
   Typography,
-  Box,
-  IconButton
 } from "@mui/material";
-import { Edit, Delete } from "@mui/icons-material";
+import ContentCutIcon from "@mui/icons-material/ContentCut";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import type { Service } from "../types";
 
 interface CardServicoProps {
@@ -20,7 +24,7 @@ export function CardServico({
   onDelete 
 }: CardServicoProps) {
   const formatCurrency = (value: number | string) => {
-    const num = typeof value === 'string' ? parseFloat(value) : value;
+    const num = typeof value === "string" ? parseFloat(value) : value;
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -28,64 +32,113 @@ export function CardServico({
   };
 
   return (
-    <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <CardContent sx={{ flexGrow: 1 }}>
-        {service.imagemUrl && (
-          <Box
-            sx={{
-              width: "100%",
-              height: 140,
-              borderRadius: 2,
-              mb: 2,
-              backgroundImage: `url(${service.imagemUrl})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              border: "1px solid",
-              borderColor: "divider",
-            }}
-          />
-        )}
-        <Box display="flex" justifyContent="space-between" alignItems="start">
-          <Box flex={1}>
-            <Typography variant="h6" gutterBottom>
-              {service.nome}
-            </Typography>
-            
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              {service.descrição || "Sem descrição"}
-            </Typography>
-            
-            <Typography 
-              variant="h6" 
-              color="primary" 
-              sx={{ mt: 2, fontWeight: 600 }}
-            >
-              {formatCurrency(service.preço)}
-            </Typography>
+    <Card
+      elevation={0}
+      sx={{
+        height: "100%",
+        minHeight: 172,
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: "8px",
+        bgcolor: "background.paper",
+        overflow: "hidden",
+      }}
+    >
+      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+        <Stack spacing={1.5}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "92px minmax(0, 1fr)", gap: 1.5, alignItems: "stretch" }}>
+            {service.imagemUrl ? (
+              <Box
+                component="img"
+                src={service.imagemUrl}
+                alt={service.nome}
+                loading="lazy"
+                sx={{
+                  width: 92,
+                  height: 122,
+                  borderRadius: "8px",
+                  objectFit: "cover",
+                  objectPosition: "center 24%",
+                  bgcolor: "action.hover",
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: 92,
+                  height: 122,
+                  borderRadius: "8px",
+                  display: "grid",
+                  placeItems: "center",
+                  bgcolor: "action.hover",
+                  color: "text.secondary",
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <ContentCutIcon sx={{ fontSize: 32 }} />
+              </Box>
+            )}
+
+            <Box sx={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
+              <Typography variant="h6" fontWeight={800} lineHeight={1.15} sx={{ overflowWrap: "anywhere" }}>
+                {service.nome}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  mt: 0.75,
+                  minHeight: 40,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+              >
+                {service.descrição || "Sem descrição cadastrada."}
+              </Typography>
+              <Box sx={{ mt: "auto", pt: 1 }}>
+                <Chip label={formatCurrency(service.preço)} color="primary" size="small" sx={{ fontWeight: 800 }} />
+              </Box>
+            </Box>
           </Box>
 
-          <Box display="flex" flexDirection="column" gap={0.5}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr 1fr", sm: "1fr" },
+              gap: 1,
+            }}
+          >
             {onEdit && (
-              <IconButton
+              <Button
                 size="small"
+                variant="outlined"
+                startIcon={<EditOutlinedIcon />}
                 onClick={() => onEdit(service)}
-                color="primary"
+                sx={{ minHeight: 38 }}
               >
-                <Edit />
-              </IconButton>
+                Editar
+              </Button>
             )}
-            
+
             {onDelete && (
-              <IconButton
+              <Button
                 size="small"
+                variant="text"
+                startIcon={<DeleteOutlineIcon />}
                 onClick={() => onDelete(service)}
                 color="error"
+                sx={{ minHeight: 38 }}
               >
-                <Delete />
-              </IconButton>
+                Excluir
+              </Button>
             )}
           </Box>
-        </Box>
+        </Stack>
       </CardContent>
     </Card>
   );

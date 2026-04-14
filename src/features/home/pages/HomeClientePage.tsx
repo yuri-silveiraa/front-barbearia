@@ -5,7 +5,12 @@ import {
   Button,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Paper,
+  Stack,
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -59,6 +64,7 @@ export default function HomeClientePage() {
   const navigate = useNavigate();
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -241,18 +247,25 @@ export default function HomeClientePage() {
                 <Paper
                   key={service.id}
                   elevation={0}
-                  onClick={() => navigate("/reservas/create")}
+                  component="button"
+                  type="button"
+                  onClick={() => setSelectedService(service)}
                   sx={{
-                    minHeight: 190,
+                    minHeight: 172,
                     p: 2,
                     borderRadius: 2,
                     position: "relative",
                     overflow: "hidden",
                     cursor: "pointer",
-                    display: "flex",
-                    alignItems: "flex-end",
-                    bgcolor: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    display: "grid",
+                    gridTemplateColumns: "92px minmax(0, 1fr)",
+                    gap: 1.5,
+                    alignItems: "stretch",
+                    textAlign: "left",
+                    color: "inherit",
+                    bgcolor: "background.paper",
+                    border: "1px solid",
+                    borderColor: "divider",
                     transition: "transform .18s ease, border-color .18s ease",
                     "&:hover": {
                       transform: "translateY(-3px)",
@@ -262,34 +275,58 @@ export default function HomeClientePage() {
                 >
                   {imageUrl ? (
                     <Box
+                      component="img"
+                      src={imageUrl}
+                      alt={service.name}
+                      loading="lazy"
                       sx={{
-                        position: "absolute",
-                        inset: 0,
-                        backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.78)), url(${imageUrl})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
+                        width: 92,
+                        height: 122,
+                        borderRadius: "8px",
+                        objectFit: "cover",
+                        objectPosition: "center 24%",
+                        bgcolor: "action.hover",
+                        border: "1px solid",
+                        borderColor: "divider",
                       }}
                     />
                   ) : (
                     <Box
                       sx={{
-                        position: "absolute",
-                        inset: 0,
-                        background:
-                          "linear-gradient(135deg, rgba(0,191,165,0.22), rgba(255,171,0,0.1)), #111",
+                        width: 92,
+                        height: 122,
+                        borderRadius: "8px",
+                        display: "grid",
+                        placeItems: "center",
+                        bgcolor: "action.hover",
+                        color: "text.secondary",
+                        border: "1px solid",
+                        borderColor: "divider",
                       }}
-                    />
+                    >
+                      <ContentCutIcon sx={{ fontSize: 32 }} />
+                    </Box>
                   )}
 
-                  <Box sx={{ position: "relative", zIndex: 1 }}>
-                    <ContentCutIcon sx={{ color: "primary.main", mb: 1 }} />
-                    <Typography variant="h6" fontWeight={800}>
+                  <Box sx={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
+                    <Typography variant="h6" fontWeight={800} lineHeight={1.15} sx={{ overflowWrap: "anywhere" }}>
                       {service.name}
                     </Typography>
-                    <Typography variant="body2" color="rgba(255,255,255,0.72)" sx={{ mb: 1 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{
+                        mt: 0.75,
+                        minHeight: 40,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
                       {service.description || "Serviço da barbearia"}
                     </Typography>
-                    <Typography color="primary.main" fontWeight={800}>
+                    <Typography color="primary.main" fontWeight={800} sx={{ mt: "auto", pt: 1 }}>
                       {formatCurrency(service.price)}
                     </Typography>
                   </Box>
@@ -299,6 +336,90 @@ export default function HomeClientePage() {
           </Box>
         )}
       </Box>
+
+      <Dialog
+        open={!!selectedService}
+        onClose={() => setSelectedService(null)}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{ sx: { borderRadius: "8px", m: { xs: 1.5, sm: 3 } } }}
+      >
+        {selectedService && (
+          <>
+            <DialogTitle sx={{ pb: 1 }}>
+              <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+                Serviço
+              </Typography>
+              <Typography variant="h6" fontWeight={800}>
+                {selectedService.name}
+              </Typography>
+            </DialogTitle>
+            <DialogContent>
+              <Stack spacing={2}>
+                {resolveImageUrl(selectedService.imagemUrl) ? (
+                  <Box
+                    sx={{
+                      width: "100%",
+                      minHeight: 320,
+                      maxHeight: 460,
+                      borderRadius: "8px",
+                      bgcolor: "action.hover",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      display: "grid",
+                      placeItems: "center",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={resolveImageUrl(selectedService.imagemUrl) ?? undefined}
+                      alt={selectedService.name}
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        maxHeight: 460,
+                        objectFit: "contain",
+                      }}
+                    />
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      width: "100%",
+                      minHeight: 220,
+                      borderRadius: "8px",
+                      bgcolor: "action.hover",
+                      display: "grid",
+                      placeItems: "center",
+                      color: "text.secondary",
+                    }}
+                  >
+                    <ContentCutIcon sx={{ fontSize: 56 }} />
+                  </Box>
+                )}
+
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {selectedService.description || "Serviço da barbearia"}
+                  </Typography>
+                  <Typography color="primary.main" fontWeight={900} sx={{ mt: 1 }}>
+                    {formatCurrency(selectedService.price)}
+                  </Typography>
+                </Box>
+              </Stack>
+            </DialogContent>
+            <DialogActions sx={{ p: 2, pt: 0, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
+              <Button onClick={() => setSelectedService(null)} fullWidth>
+                Fechar
+              </Button>
+              <Button variant="contained" onClick={() => navigate("/reservas/create")} fullWidth>
+                Agendar serviço
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
     </Box>
   );
 }

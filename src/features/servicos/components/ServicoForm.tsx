@@ -8,9 +8,14 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  InputAdornment,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import ImageIcon from "@mui/icons-material/Image";
 import type { Service, CreateServiceData } from "../types";
 
 interface ServicoFormProps {
@@ -30,25 +35,36 @@ export function ServicoForm({
   initialData,
   loading = false,
 }: ServicoFormProps) {
-  const [nome, setNome] = useState("");
-  const [descricao, setDescricao] = useState("");
-  const [preco, setPreco] = useState<number | string>(0);
+  if (!open) return null;
+
+  return (
+    <ServicoFormDialog
+      key={initialData?.id ?? "new-service"}
+      open={open}
+      onClose={onClose}
+      onSave={onSave}
+      initialData={initialData}
+      loading={loading}
+    />
+  );
+}
+
+function ServicoFormDialog({
+  open,
+  onClose,
+  onSave,
+  initialData,
+  loading = false,
+}: ServicoFormProps) {
+  const [nome, setNome] = useState(initialData?.nome ?? "");
+  const [descricao, setDescricao] = useState(initialData?.descrição ?? "");
+  const [preco, setPreco] = useState<number | string>(
+    typeof initialData?.preço === "string" ? parseFloat(initialData.preço) : (initialData?.preço ?? 0)
+  );
   const [imagemArquivo, setImagemArquivo] = useState<File | null>(null);
-  const [imagemPreview, setImagemPreview] = useState<string | null>(null);
+  const [imagemPreview, setImagemPreview] = useState<string | null>(initialData?.imagemUrl ?? null);
   const [removerImagem, setRemoverImagem] = useState(false);
   const [erroImagem, setErroImagem] = useState("");
-
-  useEffect(() => {
-    if (!open) return;
-
-    setNome(initialData?.nome ?? "");
-    setDescricao(initialData?.descrição ?? "");
-    setPreco(typeof initialData?.preço === "string" ? parseFloat(initialData.preço) : (initialData?.preço ?? 0));
-    setImagemArquivo(null);
-    setRemoverImagem(false);
-    setErroImagem("");
-    setImagemPreview(initialData?.imagemUrl ?? null);
-  }, [initialData, open]);
 
   useEffect(() => {
     return () => {
@@ -103,11 +119,24 @@ export function ServicoForm({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={() => !loading && onClose()}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: "8px", m: { xs: 1.5, sm: 3 } } }}
+    >
       <form onSubmit={handleSubmit}>
-        <DialogTitle>{initialData ? "Editar Serviço" : "Novo Serviço"}</DialogTitle>
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+            Serviço
+          </Typography>
+          <Typography variant="h6" fontWeight={800}>
+            {initialData ? "Editar serviço" : "Novo serviço"}
+          </Typography>
+        </DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+          <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField
               label="Nome"
               value={nome}
@@ -132,52 +161,90 @@ export function ServicoForm({
               fullWidth
               required
               inputProps={{ min: 0, step: 0.01 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <AttachMoneyIcon color="action" fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
             />
 
             <Box
               sx={{
                 p: 2,
-                borderRadius: 2,
+                borderRadius: "8px",
                 border: "1px solid",
                 borderColor: "divider",
                 backgroundColor: "background.default",
               }}
             >
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Imagem do serviço
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Envie uma foto JPG, PNG ou WEBP com até 5MB.
-              </Typography>
+              <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.25, mb: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "8px",
+                    display: "grid",
+                    placeItems: "center",
+                    bgcolor: "action.hover",
+                    color: "primary.main",
+                  }}
+                >
+                  <ImageIcon fontSize="small" />
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={800}>
+                    Imagem do serviço
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    JPG, PNG ou WEBP com até 5MB.
+                  </Typography>
+                </Box>
+              </Box>
 
               {imagemPreview && (
                 <Box
                   sx={{
                     width: "100%",
-                    height: 180,
-                    borderRadius: 2,
+                    minHeight: 260,
+                    maxHeight: 360,
+                    borderRadius: "8px",
                     mb: 2,
-                    backgroundImage: `url(${imagemPreview})`,
-                    backgroundPosition: "center",
-                    backgroundSize: "cover",
+                    bgcolor: "action.hover",
                     border: "1px solid",
                     borderColor: "divider",
+                    display: "grid",
+                    placeItems: "center",
+                    overflow: "hidden",
                   }}
-                />
+                >
+                  <Box
+                    component="img"
+                    src={imagemPreview}
+                    alt={nome || "Imagem do serviço"}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      maxHeight: 360,
+                      objectFit: "contain",
+                    }}
+                  />
+                </Box>
               )}
 
-              <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-                <Button variant="outlined" component="label">
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                <Button variant="outlined" component="label" fullWidth>
                   {imagemPreview ? "Trocar imagem" : "Selecionar imagem"}
                   <input hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImageChange} />
                 </Button>
 
                 {imagemPreview && (
-                  <Button color="inherit" onClick={handleRemoveImage}>
+                  <Button color="inherit" onClick={handleRemoveImage} startIcon={<DeleteOutlineIcon />} fullWidth>
                     Remover imagem
                   </Button>
                 )}
-              </Box>
+              </Stack>
 
               {erroImagem && (
                 <Alert severity="error" sx={{ mt: 2 }}>
@@ -185,13 +252,13 @@ export function ServicoForm({
                 </Alert>
               )}
             </Box>
-          </Box>
+          </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={loading}>
+        <DialogActions sx={{ p: 2, pt: 0, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
+          <Button onClick={onClose} disabled={loading} fullWidth>
             Cancelar
           </Button>
-          <Button type="submit" variant="contained" disabled={loading || Boolean(erroImagem)}>
+          <Button type="submit" variant="contained" disabled={loading || Boolean(erroImagem)} fullWidth>
             {loading ? "Salvando..." : "Salvar"}
           </Button>
         </DialogActions>

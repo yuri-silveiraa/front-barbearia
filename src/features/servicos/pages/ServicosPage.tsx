@@ -1,15 +1,21 @@
 import { useState, useEffect } from "react";
 import {
+  Alert,
   Box,
-  Typography,
   Button,
   CircularProgress,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  Stack,
+  Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import ContentCutIcon from "@mui/icons-material/ContentCut";
+import ImageIcon from "@mui/icons-material/Image";
+import PaidIcon from "@mui/icons-material/Paid";
 import {
   getServices,
   createService,
@@ -32,6 +38,19 @@ export default function ServicosPage() {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+
+  const totalServices = services.length;
+  const servicesWithImage = services.filter((service) => Boolean(service.imagemUrl)).length;
+  const averagePrice =
+    totalServices > 0
+      ? services.reduce((total, service) => total + Number(service.preço), 0) / totalServices
+      : 0;
 
   const loadServices = async () => {
     try {
@@ -122,7 +141,7 @@ export default function ServicosPage() {
   };
 
   return (
-    <Box>
+    <Box sx={{ width: "100%", maxWidth: 1040, mx: "auto", pb: 2 }}>
       <FeedbackBanner message={error} severity="error" onClose={() => setError("")} />
       <FeedbackBanner message={success} severity="success" onClose={() => setSuccess("")} />
       <Box
@@ -132,54 +151,121 @@ export default function ServicosPage() {
           alignItems: { xs: "flex-start", sm: "center" },
           flexDirection: { xs: "column", sm: "row" },
           gap: 2,
-          mb: 3
+          mb: 2,
         }}
       >
         <Box>
-          <Typography variant="h5" fontWeight={700}>
-            Gerenciar Serviços
+          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+            Serviços
+          </Typography>
+          <Typography
+            variant="h4"
+            sx={{
+              fontSize: { xs: 28, sm: 34 },
+              fontWeight: 800,
+              lineHeight: 1.05,
+              mb: 1,
+            }}
+          >
+            Catálogo da barbearia
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Crie, edite e organize seus serviços
+            Cadastre os serviços que aparecem para os clientes na hora de agendar.
           </Typography>
         </Box>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenForm()}
-          sx={{ width: { xs: "100%", sm: "auto" } }}
+          sx={{ width: { xs: "100%", sm: "auto" }, minHeight: 44, borderRadius: "8px" }}
         >
-          Novo Serviço
+          Novo serviço
         </Button>
       </Box>
 
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)" },
+          gap: 1,
+          mb: 2,
+        }}
+      >
+        {[
+          { label: "Serviços", value: String(totalServices), icon: <ContentCutIcon fontSize="small" /> },
+          { label: "Com imagem", value: String(servicesWithImage), icon: <ImageIcon fontSize="small" /> },
+          { label: "Preço médio", value: totalServices > 0 ? formatCurrency(averagePrice) : "--", icon: <PaidIcon fontSize="small" /> },
+        ].map((item) => (
+          <Paper
+            key={item.label}
+            elevation={0}
+            sx={{
+              p: { xs: 1.25, sm: 1.75 },
+              minHeight: 88,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: "8px",
+              bgcolor: "background.paper",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box sx={{ color: "text.secondary", display: "flex" }}>{item.icon}</Box>
+            <Box>
+              <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
+                {item.value}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {item.label}
+              </Typography>
+            </Box>
+          </Paper>
+        ))}
+      </Box>
+
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress />
         </Box>
       ) : services.length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 4 }}>
-          <Typography color="text.secondary" sx={{ mb: 2 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 4, sm: 6 },
+            textAlign: "center",
+            borderRadius: "8px",
+            border: "1px dashed",
+            borderColor: "divider",
+            bgcolor: "background.paper",
+          }}
+        >
+          <ContentCutIcon sx={{ fontSize: 52, color: "text.disabled", mb: 2 }} />
+          <Typography variant="h6" color="text.secondary">
             Nenhum serviço cadastrado
           </Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenForm()}>
+          <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+            Comece pelo serviço mais vendido da barbearia.
+          </Typography>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenForm()} sx={{ minHeight: 44 }}>
             Cadastrar primeiro serviço
           </Button>
-        </Box>
+        </Paper>
       ) : (
-        <Box sx={{ 
-          display: "grid", 
-          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }, 
-          gap: 2 
-        }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" },
+            gap: 1.5,
+          }}
+        >
           {services.map((service) => (
-            <Box key={service.id}>
-              <CardServico
-                service={service}
-                onEdit={() => handleOpenForm(service)}
-                onDelete={() => handleDelete(service)}
-              />
-            </Box>
+            <CardServico
+              key={service.id}
+              service={service}
+              onEdit={() => handleOpenForm(service)}
+              onDelete={() => handleDelete(service)}
+            />
           ))}
         </Box>
       )}
@@ -192,18 +278,30 @@ export default function ServicosPage() {
         loading={saving}
       />
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirmar Exclusão</DialogTitle>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => !deleting && setDeleteDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{ sx: { borderRadius: "8px", m: { xs: 1.5, sm: 3 } } }}
+      >
+        <DialogTitle>Excluir serviço</DialogTitle>
         <DialogContent>
-          <Typography>
-            Tem certeza que deseja excluir "{serviceToDelete?.nome}"?
-          </Typography>
+          <Stack spacing={2}>
+            <Alert severity="warning">Serviços com agendamentos vinculados podem não ser removidos.</Alert>
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                Serviço selecionado
+              </Typography>
+              <Typography fontWeight={800}>{serviceToDelete?.nome}</Typography>
+            </Box>
+          </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>
+        <DialogActions sx={{ p: 2, pt: 0, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting} fullWidth>
             Cancelar
           </Button>
-          <Button onClick={confirmDelete} color="error" disabled={deleting}>
+          <Button onClick={confirmDelete} color="error" variant="contained" disabled={deleting} fullWidth>
             {deleting ? "Excluindo..." : "Excluir"}
           </Button>
         </DialogActions>
