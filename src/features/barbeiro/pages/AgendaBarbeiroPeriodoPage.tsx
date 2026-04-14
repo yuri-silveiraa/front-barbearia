@@ -27,6 +27,7 @@ import PaidIcon from "@mui/icons-material/Paid";
 import PersonIcon from "@mui/icons-material/Person";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import dayjs from "dayjs";
+import "dayjs/locale/pt-br";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -36,6 +37,8 @@ import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import type { BarberAppointment } from "../../../api/barbeiro/types";
 import type { Service } from "../../servicos/types";
 import { buildWhatsappUrl, formatWhatsappDisplay } from "../../../utils/customerInput";
+
+dayjs.locale("pt-br");
 
 const statusColors: Record<string, "primary" | "success" | "error"> = {
   SCHEDULED: "primary",
@@ -224,17 +227,19 @@ export default function AgendaBarbeiroPeriodoPage() {
           bgcolor: "background.paper",
         }}
       >
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
             <DatePicker
               label="Início"
               value={startDate}
+              format="DD-MM-YYYY"
               onChange={(value) => value && setStartDate(value)}
               slotProps={{ textField: { fullWidth: true, size: "small" } }}
             />
             <DatePicker
               label="Fim"
               value={endDate}
+              format="DD-MM-YYYY"
               onChange={(value) => value && setEndDate(value)}
               slotProps={{ textField: { fullWidth: true, size: "small" } }}
             />
