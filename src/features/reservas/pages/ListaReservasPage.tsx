@@ -23,9 +23,11 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import { cancelarReserva, getReservas } from "../../../api/reservas/reserva.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import type { Reserva, ReservaStatus } from "../types";
+import { buildWhatsappUrl, formatWhatsappDisplay } from "../../../utils/customerInput";
 
 interface StatusConfig {
   color: "primary" | "success" | "error";
@@ -125,6 +127,12 @@ export function ListaReservasPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
+
+
+  const selectedWhatsappUrl = selectedReserva ? buildWhatsappUrl(selectedReserva.barberTelephone) : null;
+  const selectedWhatsappLabel = selectedReserva?.barberTelephone
+    ? formatWhatsappDisplay(selectedReserva.barberTelephone)
+    : "WhatsApp não informado";
 
   const handleCancel = async () => {
     if (!selectedReserva) return;
@@ -423,6 +431,9 @@ export function ListaReservasPage() {
                       Barbeiro
                     </Typography>
                     <Typography fontWeight={800}>{selectedReserva.barber}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {selectedWhatsappLabel}
+                    </Typography>
                   </Box>
                 </Box>
 
@@ -439,6 +450,19 @@ export function ListaReservasPage() {
             </DialogContent>
 
             <DialogActions sx={{ p: 2, pt: 0, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
+              {selectedWhatsappUrl && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  href={selectedWhatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  startIcon={<WhatsAppIcon />}
+                  fullWidth
+                >
+                  Chamar barbeiro
+                </Button>
+              )}
               {selectedReserva.status === "SCHEDULED" && (
                 <Button
                   variant="outlined"
@@ -451,7 +475,7 @@ export function ListaReservasPage() {
                 </Button>
               )}
               <Button
-                variant={selectedReserva.status === "SCHEDULED" ? "text" : "contained"}
+                variant={selectedReserva.status === "SCHEDULED" || selectedWhatsappUrl ? "text" : "contained"}
                 onClick={() => setSelectedReserva(null)}
                 disabled={canceling}
                 fullWidth

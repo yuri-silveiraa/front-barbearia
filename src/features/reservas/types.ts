@@ -12,6 +12,7 @@ export interface Reserva {
   id: string;
   client: string;
   barber: string;
+  barberTelephone?: string | null;
   service: string;
   time: string;
   status: ReservaStatus;
