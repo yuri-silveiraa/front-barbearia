@@ -95,6 +95,8 @@ function normalizeBarberAdmin(raw: UnknownRecord): BarberAdmin {
     id: readString(raw, ["id", "barberId", "_id", "uuid"]),
     userId: readString(raw, ["userId", "user_id", "user.id"]),
     nome: readString(raw, ["nome", "name", "user.name"], "Barbeiro sem nome"),
+    email: readString(raw, ["email", "user.email"]),
+    telefone: readString(raw, ["telefone", "telephone", "phone", "user.telephone", "user.phone"]),
     isAdmin: readBoolean(raw, ["isAdmin", "admin"], false),
     isActive: readBoolean(raw, ["isActive", "active"], true),
     createdAt: readString(raw, ["createdAt", "created_at"]),
