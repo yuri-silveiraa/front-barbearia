@@ -11,15 +11,11 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  FormControl,
   FormControlLabel,
-  FormLabel,
   IconButton,
   MenuItem,
   Paper,
   Popover,
-  Radio,
-  RadioGroup,
   Stack,
   TextField,
   Typography,
@@ -47,6 +43,7 @@ import {
 } from "../../../api/time/time.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import type { GenerateTimeSlotsParams, TimeSlot, ValidationResult } from "../../../api/time/time.service";
+import { buildGenerateTimeSlotsParams, getRemainderWarningText } from "../utils/timeSlotGeneration";
 
 dayjs.locale("pt-br");
 
@@ -132,7 +129,6 @@ export default function HorariosPage() {
   const [selectedDayAnchor, setSelectedDayAnchor] = useState<{ el: HTMLElement | null; date: string } | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, loading: false });
-  const [selectedWarningOption, setSelectedWarningOption] = useState("0");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -250,21 +246,10 @@ export default function HorariosPage() {
       return;
     }
 
-    const sortedDays = [...selectedDays].sort();
-    const startDate = sortedDays[0];
-    const endDate = sortedDays[sortedDays.length - 1];
-
-    const params: GenerateTimeSlotsParams = {
-      startTime: config.startTime,
-      endTime: config.endTime,
-      blockDuration: config.blockDuration,
-      startDate,
-      endDate,
-    };
-
-    if (config.hasInterval) {
-      params.intervalStart = config.intervalStart;
-      params.intervalDuration = config.intervalDuration;
+    const params = buildGenerateTimeSlotsParams(config, selectedDays);
+    if (!params) {
+      setError("Selecione pelo menos um dia");
+      return;
     }
 
     try {
@@ -279,10 +264,9 @@ export default function HorariosPage() {
         return;
       }
 
-      if (response.validation.warning && !pendingParams) {
+      if (response.validation.warning) {
         setWarningDialog(response.validation);
         setPendingParams(params);
-        setSelectedWarningOption("0");
         return;
       }
 
@@ -299,11 +283,8 @@ export default function HorariosPage() {
     }
   };
 
-  const handleWarningConfirm = async (optionIndex: number) => {
-    if (!pendingParams || !warningDialog) return;
-
-    const selectedOption = warningDialog.warning?.options[optionIndex];
-    if (!selectedOption) return;
+  const handleWarningConfirm = async () => {
+    if (!pendingParams) return;
 
     try {
       setLoading(true);
@@ -311,8 +292,13 @@ export default function HorariosPage() {
 
       const response = await generateTimeSlots({
         ...pendingParams,
-        selectedOption,
+        confirmRemainder: true,
       });
+
+      if (!response.validation.isValid && response.validation.error) {
+        setError(response.validation.error);
+        return;
+      }
 
       if (response.validation.isValid) {
         setSuccess(`Gerados ${response.timeSlots.length} horários com sucesso!`);
@@ -748,7 +734,7 @@ export default function HorariosPage() {
 
       <Dialog
         open={!!warningDialog}
-        onClose={() => setWarningDialog(null)}
+        onClose={() => { setWarningDialog(null); setPendingParams(null); }}
         maxWidth="sm"
         fullWidth
         PaperProps={{ sx: { bgcolor: "background.paper", borderRadius: 2 } }}
@@ -756,29 +742,16 @@ export default function HorariosPage() {
         <DialogTitle>Atenção</DialogTitle>
         <DialogContent>
           <Alert severity="warning" sx={{ mb: 2 }}>
-            {warningDialog?.warning?.message}
+            {warningDialog ? getRemainderWarningText(warningDialog) : ""}
           </Alert>
-          <FormControl>
-            <FormLabel>Escolha uma opção:</FormLabel>
-            <RadioGroup
-              value={selectedWarningOption}
-              onChange={(event) => setSelectedWarningOption(event.target.value)}
-            >
-              {warningDialog?.warning?.options.map((option, index) => (
-                <FormControlLabel
-                  key={`${option.start}-${option.end}`}
-                  value={index.toString()}
-                  control={<Radio />}
-                  label={`${option.start} - ${option.end}`}
-                />
-              ))}
-            </RadioGroup>
-          </FormControl>
+          <Typography variant="body2" color="text.secondary">
+            Se preferir blocos fechados sem sobra, ajuste o horário final ou a duração do atendimento antes de prosseguir.
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setWarningDialog(null)}>Cancelar</Button>
-          <Button variant="contained" onClick={() => handleWarningConfirm(Number(selectedWarningOption))}>
-            Confirmar
+          <Button onClick={() => { setWarningDialog(null); setPendingParams(null); }}>Ajustar horários</Button>
+          <Button variant="contained" onClick={handleWarningConfirm}>
+            Prosseguir
           </Button>
         </DialogActions>
       </Dialog>

@@ -8,11 +8,9 @@ export interface GenerateTimeSlotsParams {
   intervalDuration?: number;
   startDate: string;
   endDate: string;
+  selectedDates?: string[];
   excludeDays?: number[];
-  selectedOption?: {
-    start: string;
-    end: string;
-  };
+  confirmRemainder?: boolean;
 }
 
 export interface TimeSlot {
@@ -25,10 +23,8 @@ export interface ValidationResult {
   error?: string;
   warning?: {
     message: string;
-    options: Array<{
-      start: string;
-      end: string;
-    }>;
+    remainderMinutes: number;
+    lastBlockEnd: string;
   };
 }
 
