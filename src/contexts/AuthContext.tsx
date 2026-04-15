@@ -1,8 +1,16 @@
 import { createContext, useContext, useEffect, useState, useRef } from "react";
-import { loginService, getMe, logoutService, updateMe, deleteMe, verifyEmail } from "../api/auth/auth.service";
+import {
+  loginService,
+  getMe,
+  logoutService,
+  updateMe,
+  deleteMe,
+  verifyEmail,
+  changePasswordMe,
+} from "../api/auth/auth.service";
 import { googleAuthService } from "../api/auth/googleAuth";
 import { fetchCsrfToken, clearCsrfToken } from "../api/http";
-import type { User, AuthContextData, UpdateProfileData } from "../features/auth/types";
+import type { User, AuthContextData, ChangePasswordData, UpdateProfileData } from "../features/auth/types";
 import type { LoginData } from "../api/auth/schema";
 
 export const AuthContext = createContext<AuthContextData | null>(null);
@@ -76,6 +84,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return result.user;
   }
 
+  async function changePassword(data: ChangePasswordData) {
+    const result = await changePasswordMe(data);
+    setUser(result.user);
+    return result.user;
+  }
+
   async function deleteUser() {
     await deleteMe();
     clearCsrfToken();
@@ -90,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginWithGoogle,
       verifyEmailAndLogin,
       updateUser,
+      changePassword,
       deleteUser,
       logout,
       loadingAuth

@@ -1,7 +1,7 @@
 import { api } from "../http";
 import type { LoginData, RegisterData } from "./schema";
 import type { LoginResponse } from "./types";
-import type { UpdateProfileData, User } from "../../features/auth/types";
+import type { ChangePasswordData, UpdateProfileData, User } from "../../features/auth/types";
 import { fileToBase64, resolveApiImageUrl } from "../../utils/apiImage";
 
 type ApiUser = {
@@ -14,6 +14,7 @@ type ApiUser = {
   barber?: { isAdmin?: boolean };
   isAdmin?: boolean;
   profileImageUrl?: string | null;
+  hasPassword?: boolean;
 };
 
 function mapUser(data: ApiUser): User {
@@ -24,6 +25,7 @@ function mapUser(data: ApiUser): User {
     type: data.type,
     phone: data.telephone ?? data.phone,
     profileImageUrl: resolveApiImageUrl(data.profileImageUrl),
+    hasPassword: data.hasPassword,
     isAdmin: data.isAdmin ?? data.barber?.isAdmin ?? false,
   };
 }
@@ -118,6 +120,23 @@ export async function updateMe(data: UpdateProfileData): Promise<{ user: User }>
     if (error && typeof error === "object" && "response" in error) {
       const axiosError = error as { response?: { data?: { message?: string } } };
       const message = axiosError.response?.data?.message || "Erro ao atualizar perfil";
+      throw new Error(message);
+    }
+    throw new Error("Erro de conexão. Tente novamente.");
+  }
+}
+
+export async function changePasswordMe(data: ChangePasswordData): Promise<{ message: string; user: User }> {
+  try {
+    const response = await api.patch<{ message: string; user: ApiUser }>("/user/me/password", data);
+    return {
+      message: response.data.message,
+      user: mapUser(response.data.user),
+    };
+  } catch (error) {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      const message = axiosError.response?.data?.message || "Erro ao alterar senha";
       throw new Error(message);
     }
     throw new Error("Erro de conexão. Tente novamente.");

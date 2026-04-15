@@ -5,6 +5,7 @@ export type User = {
   email: string;
   phone?: string;
   profileImageUrl?: string | null;
+  hasPassword?: boolean;
   type?: "BARBER" | "CLIENT";
   isAdmin?: boolean;
 };
@@ -17,6 +18,7 @@ export type AuthContextData = {
   loginWithGoogle: (credential: string) => Promise<User>;
   verifyEmailAndLogin: (code: string) => Promise<User>;
   updateUser: (data: UpdateProfileData) => Promise<User>;
+  changePassword: (data: ChangePasswordData) => Promise<User>;
   deleteUser: () => Promise<void>;
   logout: () => Promise<void>;
   loadingAuth: boolean;
@@ -34,4 +36,10 @@ export type UpdateProfileData = {
   telephone?: string;
   profileImageFile?: File | null;
   removeProfileImage?: boolean;
+};
+
+export type ChangePasswordData = {
+  currentPassword?: string;
+  newPassword: string;
+  confirmPassword: string;
 };

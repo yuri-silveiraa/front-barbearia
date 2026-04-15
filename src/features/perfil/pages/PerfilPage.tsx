@@ -15,6 +15,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
+  InputAdornment,
   Paper,
   Stack,
   TextField,
@@ -24,13 +26,21 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EmailIcon from "@mui/icons-material/Email";
 import EditIcon from "@mui/icons-material/Edit";
 import ImageIcon from "@mui/icons-material/Image";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { useAuth } from "../../../contexts/AuthContext";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import { formatName } from "../../../utils/formatName";
 import { formatWhatsappDisplay, onlyDigits } from "../../../utils/customerInput";
+import {
+  needsCurrentPasswordError,
+  passwordChangeSchema,
+  type PasswordChangeForm,
+} from "../utils/passwordChangeValidation";
 
 const profileSchema = z.object({
   name: z.string()
@@ -47,24 +57,29 @@ const MAX_PROFILE_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export function PerfilPage() {
-  const { user, updateUser, deleteUser } = useAuth();
+  const { user, updateUser, changePassword, deleteUser } = useAuth();
   const navigate = useNavigate();
   const [warning, setWarning] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(user?.profileImageUrl ?? null);
   const [removeProfileImage, setRemoveProfileImage] = useState(false);
   const [profileImageError, setProfileImageError] = useState("");
+  const [passwordFormError, setPasswordFormError] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
+    register: registerProfile,
+    handleSubmit: handleProfileSubmit,
+    formState: { errors: profileErrors, isSubmitting: isSubmittingProfile },
+    reset: resetProfile,
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -74,8 +89,23 @@ export function PerfilPage() {
     },
   });
 
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
+    formState: { errors: passwordErrors, isSubmitting: isSubmittingPassword },
+    reset: resetPassword,
+    setError: setPasswordFieldError,
+  } = useForm<PasswordChangeForm>({
+    resolver: zodResolver(passwordChangeSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
   useEffect(() => {
-    reset({
+    resetProfile({
       name: user?.name || "",
       email: user?.email || "",
       telephone: user?.phone || "",
@@ -84,7 +114,17 @@ export function PerfilPage() {
     setProfileImagePreview(user?.profileImageUrl ?? null);
     setRemoveProfileImage(false);
     setProfileImageError("");
-  }, [user, reset, editOpen]);
+  }, [user, resetProfile, editOpen]);
+
+  useEffect(() => {
+    if (!passwordOpen) {
+      resetPassword();
+      setPasswordFormError("");
+      setShowCurrentPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+    }
+  }, [passwordOpen, resetPassword]);
 
   useEffect(() => {
     return () => {
@@ -153,6 +193,34 @@ export function PerfilPage() {
     }
   };
 
+  const onPasswordSubmit = async (data: PasswordChangeForm) => {
+    setError(null);
+    setSuccess(null);
+    setPasswordFormError("");
+
+    if (needsCurrentPasswordError(user?.hasPassword !== false, data.currentPassword)) {
+      setPasswordFieldError("currentPassword", {
+        type: "manual",
+        message: "Informe sua senha atual",
+      });
+      return;
+    }
+
+    try {
+      await changePassword({
+        currentPassword: user?.hasPassword === false ? undefined : data.currentPassword,
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmPassword,
+      });
+      setSuccess("Senha alterada com sucesso.");
+      resetPassword();
+      setPasswordOpen(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao alterar senha";
+      setPasswordFormError(message);
+    }
+  };
+
   const handleDelete = async () => {
     setError(null);
     setSuccess(null);
@@ -181,6 +249,7 @@ export function PerfilPage() {
 
   const profileRole = user?.type === "BARBER" ? (user.isAdmin ? "Barbeiro admin" : "Barbeiro") : "Cliente";
   const formattedPhone = user?.phone ? formatWhatsappDisplay(user.phone) : "Não informado";
+  const userHasPassword = user?.hasPassword !== false;
 
   const profileItems = [
     {
@@ -346,6 +415,53 @@ export function PerfilPage() {
             p: { xs: 2, sm: 2.5 },
             borderRadius: 2,
             border: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.paper",
+          }}
+        >
+          <Box sx={{ display: "grid", gridTemplateColumns: "40px minmax(0, 1fr)", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 2,
+                display: "grid",
+                placeItems: "center",
+                bgcolor: "action.hover",
+                color: "primary.main",
+              }}
+            >
+              <LockOutlinedIcon />
+            </Box>
+            <Box>
+              <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+                Segurança
+              </Typography>
+              <Typography fontWeight={800}>{userHasPassword ? "Alterar senha" : "Criar senha de acesso"}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1.5 }}>
+                {userHasPassword
+                  ? "Troque sua senha usando a senha atual para confirmar sua identidade."
+                  : "Sua conta entrou pelo Google. Crie uma senha para também acessar com email e senha."}
+              </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<LockOutlinedIcon />}
+                onClick={() => setPasswordOpen(true)}
+                fullWidth
+                sx={{ minHeight: 42 }}
+              >
+                {userHasPassword ? "Alterar senha" : "Criar senha"}
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
+
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            borderRadius: 2,
+            border: "1px solid",
             borderColor: "rgba(244, 67, 54, 0.35)",
             bgcolor: "background.paper",
           }}
@@ -389,7 +505,7 @@ export function PerfilPage() {
 
       <Dialog
         open={editOpen}
-        onClose={() => !isSubmitting && setEditOpen(false)}
+        onClose={() => !isSubmittingProfile && setEditOpen(false)}
         fullWidth
         maxWidth="xs"
         PaperProps={{ sx: { borderRadius: 2, m: { xs: 1.5, sm: 3 } } }}
@@ -403,7 +519,7 @@ export function PerfilPage() {
           </Typography>
         </DialogTitle>
         <DialogContent>
-          <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ pt: 1 }}>
+          <Box component="form" onSubmit={handleProfileSubmit(onSubmit)} sx={{ pt: 1 }}>
             <Stack spacing={2}>
               <Box
                 sx={{
@@ -466,36 +582,150 @@ export function PerfilPage() {
               <TextField
                 label="Nome"
                 fullWidth
-                {...register("name")}
-                error={!!errors.name}
-                helperText={errors.name?.message}
+                {...registerProfile("name")}
+                error={!!profileErrors.name}
+                helperText={profileErrors.name?.message}
                 autoComplete="name"
               />
               <TextField
                 label="Email"
                 fullWidth
-                {...register("email")}
-                error={!!errors.email}
-                helperText={errors.email?.message}
+                {...registerProfile("email")}
+                error={!!profileErrors.email}
+                helperText={profileErrors.email?.message}
                 autoComplete="email"
               />
               <TextField
                 label="WhatsApp"
                 fullWidth
-                {...register("telephone")}
-                error={!!errors.telephone}
-                helperText={errors.telephone?.message || "Ex: (11) 99999-9999"}
+                {...registerProfile("telephone")}
+                error={!!profileErrors.telephone}
+                helperText={profileErrors.telephone?.message || "Ex: (11) 99999-9999"}
                 autoComplete="tel"
               />
             </Stack>
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2, pt: 0, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
-          <Button onClick={() => setEditOpen(false)} disabled={isSubmitting} fullWidth>
+          <Button onClick={() => setEditOpen(false)} disabled={isSubmittingProfile} fullWidth>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit(onSubmit)} variant="contained" disabled={isSubmitting || Boolean(profileImageError)} fullWidth>
-            {isSubmitting ? "Salvando..." : "Salvar"}
+          <Button
+            onClick={handleProfileSubmit(onSubmit)}
+            variant="contained"
+            disabled={isSubmittingProfile || Boolean(profileImageError)}
+            fullWidth
+          >
+            {isSubmittingProfile ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={passwordOpen}
+        onClose={() => !isSubmittingPassword && setPasswordOpen(false)}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{ sx: { borderRadius: 2, m: { xs: 1.5, sm: 3 } } }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
+            Segurança
+          </Typography>
+          <Typography variant="h6" fontWeight={800}>
+            {userHasPassword ? "Alterar senha" : "Criar senha"}
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Box component="form" onSubmit={handlePasswordSubmit(onPasswordSubmit)} sx={{ pt: 1 }}>
+            <Stack spacing={2}>
+              {!userHasPassword && (
+                <Alert severity="info">
+                  Como sua conta usa Google, você pode criar uma senha local sem informar senha atual.
+                </Alert>
+              )}
+
+              {passwordFormError && <Alert severity="error">{passwordFormError}</Alert>}
+
+              {userHasPassword && (
+                <TextField
+                  label="Senha atual"
+                  type={showCurrentPassword ? "text" : "password"}
+                  fullWidth
+                  {...registerPassword("currentPassword")}
+                  error={!!passwordErrors.currentPassword}
+                  helperText={passwordErrors.currentPassword?.message}
+                  autoComplete="current-password"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label={showCurrentPassword ? "Ocultar senha atual" : "Mostrar senha atual"}
+                          onClick={() => setShowCurrentPassword((value) => !value)}
+                          edge="end"
+                        >
+                          {showCurrentPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              )}
+
+              <TextField
+                label="Nova senha"
+                type={showNewPassword ? "text" : "password"}
+                fullWidth
+                {...registerPassword("newPassword")}
+                error={!!passwordErrors.newPassword}
+                helperText={passwordErrors.newPassword?.message || "Use no mínimo 6 caracteres com letra maiúscula, minúscula e número."}
+                autoComplete="new-password"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={showNewPassword ? "Ocultar nova senha" : "Mostrar nova senha"}
+                        onClick={() => setShowNewPassword((value) => !value)}
+                        edge="end"
+                      >
+                        {showNewPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <TextField
+                label="Confirmar nova senha"
+                type={showConfirmPassword ? "text" : "password"}
+                fullWidth
+                {...registerPassword("confirmPassword")}
+                error={!!passwordErrors.confirmPassword}
+                helperText={passwordErrors.confirmPassword?.message}
+                autoComplete="new-password"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={showConfirmPassword ? "Ocultar confirmação" : "Mostrar confirmação"}
+                        onClick={() => setShowConfirmPassword((value) => !value)}
+                        edge="end"
+                      >
+                        {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Stack>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
+          <Button onClick={() => setPasswordOpen(false)} disabled={isSubmittingPassword} fullWidth>
+            Cancelar
+          </Button>
+          <Button onClick={handlePasswordSubmit(onPasswordSubmit)} variant="contained" disabled={isSubmittingPassword} fullWidth>
+            {isSubmittingPassword ? "Salvando..." : userHasPassword ? "Alterar senha" : "Criar senha"}
           </Button>
         </DialogActions>
       </Dialog>

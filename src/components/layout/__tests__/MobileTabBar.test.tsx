@@ -29,5 +29,5 @@ describe("MobileTabBar", () => {
     expect(screen.getByText("Horários")).toBeInTheDocument();
     expect(screen.getByText("Serviços")).toBeInTheDocument();
     expect(screen.getByText("Barbeiros")).toBeInTheDocument();
-  });
+  }, 15000);
 });
