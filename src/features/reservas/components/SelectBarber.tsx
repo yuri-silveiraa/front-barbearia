@@ -2,6 +2,7 @@ import { type FC } from "react";
 import { Avatar, Box, Paper, Typography } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PersonIcon from "@mui/icons-material/Person";
+import { SelectionListSkeleton } from "../../../components/skeletons/SelectionSkeletons";
 import type { Barber } from "../../../api/reservas/types";
 
 interface SelectBarberProps {
@@ -26,6 +27,10 @@ const SelectBarber: FC<SelectBarberProps> = ({
       .join("")
       .toUpperCase()
       .slice(0, 2);
+
+  if (loading) {
+    return <SelectionListSkeleton avatar />;
+  }
 
   if (!loading && barbers.length === 0) {
     return (

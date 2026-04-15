@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Button,
-  CircularProgress,
   Chip,
   Divider,
   Paper,
+  Skeleton,
   Stack,
   TextField,
   Typography,
@@ -17,6 +17,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Navigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import { AppointmentListSkeleton, MetricsSkeleton } from "../../../components/skeletons/AppSkeletons";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getBarberFinanceByRange } from "../../../api/barbeiro/barbeiro.service";
 import type { BarberRevenueAppointment } from "../../../api/barbeiro/types";
@@ -181,9 +182,31 @@ export default function FinanceiroPage() {
       </Paper>
 
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-          <CircularProgress />
-        </Box>
+        <>
+          <MetricsSkeleton
+            count={4}
+            columns={{ xs: "1fr", sm: "repeat(2, 1fr)", md: "1.3fr repeat(3, 1fr)" }}
+            minHeight={128}
+          />
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 2.5 },
+              borderRadius: 2,
+              mb: 2,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+            }}
+          >
+            <Skeleton width={170} height={28} />
+            <Skeleton variant="rounded" height={220} sx={{ borderRadius: "8px", mt: 2 }} />
+          </Paper>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "0.9fr 1.1fr" }, gap: 2 }}>
+            <AppointmentListSkeleton rows={4} />
+            <AppointmentListSkeleton rows={4} />
+          </Box>
+        </>
       ) : (
         <>
           <Box

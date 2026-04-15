@@ -17,6 +17,7 @@ import {
   Paper,
   Popover,
   Stack,
+  Skeleton,
   TextField,
   Typography,
   useMediaQuery,
@@ -42,6 +43,7 @@ import {
   getMyTimeSlots,
 } from "../../../api/time/time.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import { MetricsSkeleton } from "../../../components/skeletons/AppSkeletons";
 import type { GenerateTimeSlotsParams, TimeSlot, ValidationResult } from "../../../api/time/time.service";
 import { buildGenerateTimeSlotsParams, getRemainderWarningText } from "../utils/timeSlotGeneration";
 
@@ -443,7 +445,10 @@ export default function HorariosPage() {
         </Typography>
       </Box>
 
-      <Box
+      {loadingSlots ? (
+        <MetricsSkeleton count={4} columns={{ xs: "1fr 1fr", sm: "repeat(4, 1fr)" }} minHeight={92} />
+      ) : (
+        <Box
         sx={{
           display: "grid",
           gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" },
@@ -483,7 +488,8 @@ export default function HorariosPage() {
             </Box>
           </Paper>
         ))}
-      </Box>
+        </Box>
+      )}
 
       <Box
         sx={{
@@ -656,8 +662,9 @@ export default function HorariosPage() {
           </Box>
 
           {loadingSlots ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-              <CircularProgress />
+            <Box sx={{ py: 1 }}>
+              <Skeleton width={150} height={22} sx={{ mb: 1.5 }} />
+              <Skeleton variant="rounded" height={318} sx={{ borderRadius: "8px", maxWidth: 350, mx: "auto" }} />
             </Box>
           ) : daysWithSlots.size === 0 ? (
             <Paper

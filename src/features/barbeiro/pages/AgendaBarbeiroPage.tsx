@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Divider,
   Dialog,
   DialogActions,
@@ -33,6 +32,7 @@ import { getServices } from "../../../api/servicos/servico.service";
 import { getBarberFinanceByRange, getBarberTodayAppointments } from "../../../api/barbeiro/barbeiro.service";
 import { attendAppointment, cancelAppointment, createManualAppointment, getMyTimeSlots } from "../../../api/barbeiro/barbeiro.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import { AppointmentListSkeleton, HighlightSkeleton, MetricsSkeleton } from "../../../components/skeletons/AppSkeletons";
 import type { BarberAppointment, TimeSlot } from "../../../api/barbeiro/types";
 import type { Service } from "../../servicos/types";
 import {
@@ -329,13 +329,14 @@ export default function AgendaBarbeiroPage() {
         </Box>
       </Box>
 
-      {loading && (
-        <Box display="flex" justifyContent="center" py={8}>
-          <CircularProgress />
-        </Box>
-      )}
-
-      {!loading && (
+      {loading ? (
+        <>
+          <MetricsSkeleton />
+          <HighlightSkeleton />
+          <AppointmentListSkeleton rows={5} />
+          <HighlightSkeleton />
+        </>
+      ) : (
         <>
           <Box
             sx={{

@@ -2,6 +2,7 @@ import { type FC } from "react";
 import { Box, Paper, Typography } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
+import { SelectionListSkeleton } from "../../../components/skeletons/SelectionSkeletons";
 import type { Service } from "../../../api/reservas/types";
 
 interface SelectServiceProps {
@@ -24,6 +25,10 @@ const SelectService: FC<SelectServiceProps> = ({
   loading,
   error,
 }) => {
+  if (loading) {
+    return <SelectionListSkeleton />;
+  }
+
   if (!loading && services.length === 0) {
     return (
       <Paper

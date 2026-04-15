@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Divider,
   LinearProgress,
   Paper,
@@ -220,7 +219,7 @@ export default function CriarReservaPage() {
               setSelectedBarberId(val);
               setFieldErrors((prev) => ({ ...prev, barberId: "" }));
             }}
-            loading={loading}
+            loading={loading && !submitting}
             error={fieldErrors.barberId}
           />
         );
@@ -233,7 +232,7 @@ export default function CriarReservaPage() {
               setSelectedServiceId(val);
               setFieldErrors((prev) => ({ ...prev, serviceId: "" }));
             }}
-            loading={loading}
+            loading={loading && !submitting}
             error={fieldErrors.serviceId}
           />
         );
@@ -246,7 +245,7 @@ export default function CriarReservaPage() {
               setSelectedTimeId(val);
               setFieldErrors((prev) => ({ ...prev, timeId: "" }));
             }}
-            loading={loading}
+            loading={loading && !submitting}
             error={fieldErrors.timeId}
           />
         );
@@ -328,13 +327,7 @@ export default function CriarReservaPage() {
         />
       </Paper>
 
-      {loading && barbers.length === 0 && services.length === 0 ? (
-        <Box display="flex" justifyContent="center" py={8}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <Box sx={{ mb: 2 }}>{renderStepContent()}</Box>
-      )}
+      <Box sx={{ mb: 2 }}>{renderStepContent()}</Box>
 
       <Paper
         elevation={0}

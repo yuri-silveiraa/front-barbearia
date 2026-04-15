@@ -1,4 +1,4 @@
-import { Button } from "@mui/material";
+import { Button, CircularProgress } from "@mui/material";
 import type { ButtonProps } from "@mui/material";
 
 interface CustomButtonProps extends Omit<ButtonProps, 'children'> {
@@ -17,7 +17,7 @@ export function CustomButton({
       {...props}
       disabled={disabled || loading}
     >
-      {loading ? 'Carregando...' : children}
+      {loading ? <CircularProgress size={22} color="inherit" /> : children}
     </Button>
   );
 }

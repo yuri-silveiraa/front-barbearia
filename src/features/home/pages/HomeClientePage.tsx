@@ -4,12 +4,12 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Paper,
+  Skeleton,
   Stack,
   Typography,
 } from "@mui/material";
@@ -19,6 +19,7 @@ import ContentCutIcon from "@mui/icons-material/ContentCut";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import { getReservas, getServices } from "../../../api/reservas/reserva.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import { CardGridSkeleton } from "../../../components/skeletons/AppSkeletons";
 import type { Service } from "../../../api/reservas/types";
 import type { Reserva } from "../../reservas/types";
 
@@ -104,8 +105,42 @@ export default function HomeClientePage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
-        <CircularProgress />
+      <Box sx={{ maxWidth: 1160, mx: "auto", display: "flex", flexDirection: "column", gap: { xs: 3, md: 4 } }}>
+        <Paper
+          elevation={0}
+          sx={{
+            minHeight: { xs: 300, md: 360 },
+            borderRadius: "8px",
+            p: { xs: 2.5, md: 5 },
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <Box sx={{ width: "100%", maxWidth: 660 }}>
+            <Skeleton width={180} height={34} sx={{ borderRadius: 999, mb: 2 }} />
+            <Skeleton width="88%" height={64} />
+            <Skeleton width="72%" height={56} />
+            <Skeleton width="60%" height={24} sx={{ mb: 3 }} />
+            <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5, maxWidth: 420 }}>
+              <Skeleton variant="rounded" height={44} sx={{ borderRadius: "8px", flex: 1 }} />
+              <Skeleton variant="rounded" height={44} sx={{ borderRadius: "8px", flex: 1 }} />
+            </Box>
+          </Box>
+        </Paper>
+
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 2, mb: 2 }}>
+            <Box sx={{ flex: 1 }}>
+              <Skeleton width={240} height={34} />
+              <Skeleton width="62%" height={20} />
+            </Box>
+            <Skeleton width={96} height={32} sx={{ borderRadius: 999 }} />
+          </Box>
+          <CardGridSkeleton variant="service" />
+        </Box>
       </Box>
     );
   }

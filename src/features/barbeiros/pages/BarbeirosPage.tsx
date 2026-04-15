@@ -3,7 +3,6 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -18,6 +17,7 @@ import ContentCutIcon from "@mui/icons-material/ContentCut";
 import GroupsIcon from "@mui/icons-material/Groups";
 import { Navigate } from "react-router-dom";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import { CardGridSkeleton, MetricsSkeleton } from "../../../components/skeletons/AppSkeletons";
 import { BarbeiroForm } from "../components/BarbeiroForm";
 import { BarbeiroCard } from "../components/BarbeiroCard";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -162,7 +162,10 @@ export default function BarbeirosPage() {
         </Button>
       </Box>
 
-      <Box
+      {loading ? (
+        <MetricsSkeleton columns={{ xs: "1fr 1fr", sm: "repeat(3, 1fr)" }} />
+      ) : (
+        <Box
         sx={{
           display: "grid",
           gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)" },
@@ -201,12 +204,11 @@ export default function BarbeirosPage() {
             </Box>
           </Paper>
         ))}
-      </Box>
+        </Box>
+      )}
 
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-          <CircularProgress />
-        </Box>
+        <CardGridSkeleton variant="barber" />
       ) : staffBarbers.length === 0 ? (
         <Paper
           elevation={0}

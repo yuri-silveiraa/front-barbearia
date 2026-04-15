@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -26,6 +25,7 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import { cancelarReserva, getReservas } from "../../../api/reservas/reserva.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import { AppointmentListSkeleton, HighlightSkeleton, MetricsSkeleton } from "../../../components/skeletons/AppSkeletons";
 import type { Reserva, ReservaStatus } from "../types";
 import { buildWhatsappUrl, formatWhatsappDisplay } from "../../../utils/customerInput";
 
@@ -155,14 +155,6 @@ export function ListaReservasPage() {
     }
   };
 
-  if (loading && reservas.length === 0) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
     <Box sx={{ width: "100%", maxWidth: 760, mx: "auto", pb: 2 }}>
       <FeedbackBanner message={error} severity="error" onClose={() => setError(null)} />
@@ -199,7 +191,10 @@ export function ListaReservasPage() {
         </Box>
       </Box>
 
-      <Box
+      {loading && reservas.length === 0 ? (
+        <MetricsSkeleton />
+      ) : (
+        <Box
         sx={{
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
@@ -238,10 +233,18 @@ export function ListaReservasPage() {
             </Box>
           </Paper>
         ))}
-      </Box>
+        </Box>
+      )}
 
-      {nextReserva && (
-        <Paper
+      {loading && reservas.length === 0 ? (
+        <>
+          <HighlightSkeleton />
+          <AppointmentListSkeleton />
+        </>
+      ) : (
+        <>
+          {nextReserva && (
+            <Paper
           elevation={0}
           onClick={() => setSelectedReserva(nextReserva)}
           sx={{
@@ -271,11 +274,11 @@ export function ListaReservasPage() {
             </Box>
             <ArrowForwardIcon color="primary" sx={{ alignSelf: "center", flexShrink: 0 }} />
           </Box>
-        </Paper>
-      )}
+            </Paper>
+          )}
 
-      {orderedReservas.length === 0 ? (
-        <Paper
+          {orderedReservas.length === 0 ? (
+            <Paper
           elevation={0}
           sx={{
             p: 4,
@@ -296,9 +299,9 @@ export function ListaReservasPage() {
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate("/reservas/create")}>
             Criar agendamento
           </Button>
-        </Paper>
-      ) : (
-        <Paper
+            </Paper>
+          ) : (
+            <Paper
           elevation={0}
           sx={{
             borderRadius: 2,
@@ -373,7 +376,9 @@ export function ListaReservasPage() {
               );
             })}
           </Stack>
-        </Paper>
+            </Paper>
+          )}
+        </>
       )}
 
       <Dialog

@@ -4,6 +4,7 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import dayjs from "dayjs";
 import "dayjs/locale/pt-br";
+import { TimePickerSkeleton } from "../../../components/skeletons/SelectionSkeletons";
 import type { TimeSlot } from "../../../api/reservas/types";
 
 dayjs.locale("pt-br");
@@ -72,6 +73,10 @@ const CalendarTimePicker: FC<CalendarTimePickerProps> = ({
   const [selectedDate, setSelectedDate] = useState("");
   const currentDate = selectedDate || initialDate;
   const timesForSelectedDate = groupedDates.find((group) => group.date === currentDate)?.slots ?? [];
+
+  if (loading) {
+    return <TimePickerSkeleton />;
+  }
 
   if (!loading && groupedDates.length === 0) {
     return (

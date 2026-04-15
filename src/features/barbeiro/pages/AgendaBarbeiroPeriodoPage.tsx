@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -34,6 +33,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { getBarberAppointmentsByRange, getBarberFinanceByRange } from "../../../api/barbeiro/barbeiro.service";
 import { getServices } from "../../../api/servicos/servico.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
+import { AppointmentListSkeleton, MetricsSkeleton } from "../../../components/skeletons/AppSkeletons";
 import type { BarberAppointment } from "../../../api/barbeiro/types";
 import type { Service } from "../../servicos/types";
 import { buildWhatsappUrl, formatWhatsappDisplay } from "../../../utils/customerInput";
@@ -270,7 +270,10 @@ export default function AgendaBarbeiroPeriodoPage() {
         </LocalizationProvider>
       </Paper>
 
-      <Box
+      {loading ? (
+        <MetricsSkeleton count={4} columns={{ xs: "1fr 1fr", sm: "repeat(4, 1fr)" }} minHeight={92} />
+      ) : (
+        <Box
         sx={{
           display: "grid",
           gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" },
@@ -317,12 +320,14 @@ export default function AgendaBarbeiroPeriodoPage() {
             </Box>
           </Paper>
         ))}
-      </Box>
+        </Box>
+      )}
 
       {loading && (
-        <Box display="flex" justifyContent="center" py={8}>
-          <CircularProgress />
-        </Box>
+        <Stack spacing={2}>
+          <AppointmentListSkeleton rows={3} />
+          <AppointmentListSkeleton rows={2} />
+        </Stack>
       )}
 
       {!loading && grouped.length === 0 && (
