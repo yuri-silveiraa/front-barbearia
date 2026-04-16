@@ -8,7 +8,11 @@ export interface BarberAppointment {
   barber: string;
   serviceId: string;
   service: string;
+  serviceNames?: string[];
   time: string;
+  endTime?: string;
+  serviceDurationMinutes?: number;
+  serviceDurations?: number[];
   price?: number;
   status: "SCHEDULED" | "COMPLETED" | "CANCELED";
 }

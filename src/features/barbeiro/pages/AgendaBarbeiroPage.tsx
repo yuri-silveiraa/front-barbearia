@@ -89,6 +89,46 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
+function formatDuration(minutes: number) {
+  if (minutes <= 0) return "";
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours > 0 && remainingMinutes > 0) {
+    return `${hours}h${String(remainingMinutes).padStart(2, "0")}min`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h`;
+  }
+
+  return `${minutes} min`;
+}
+
+function getAppointmentServiceLabel(appointment: BarberAppointment) {
+  const serviceNames = appointment.serviceNames?.filter(Boolean) ?? [];
+
+  if (serviceNames.length > 1) {
+    return serviceNames.join(" + ");
+  }
+
+  return appointment.service || serviceNames[0] || "Serviço";
+}
+
+function getAppointmentDuration(appointment: BarberAppointment, services: Service[]) {
+  if (appointment.serviceDurationMinutes && appointment.serviceDurationMinutes > 0) {
+    return appointment.serviceDurationMinutes;
+  }
+
+  const serviceDurationsTotal = appointment.serviceDurations?.reduce((total, duration) => total + duration, 0) ?? 0;
+  if (serviceDurationsTotal > 0) {
+    return serviceDurationsTotal;
+  }
+
+  const service = services.find((item) => item.id === appointment.serviceId);
+  return service?.duration ?? service?.durationMinutes ?? 0;
+}
+
 function formatDateForApi(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -184,6 +224,8 @@ export default function AgendaBarbeiroPage() {
     month: isMobile ? "2-digit" : "long",
   });
   const selectedPrice = selectedAppointment ? selectedAppointment.price ?? servicePrices[selectedAppointment.serviceId] : undefined;
+  const selectedServiceLabel = selectedAppointment ? getAppointmentServiceLabel(selectedAppointment) : "";
+  const selectedDuration = selectedAppointment ? getAppointmentDuration(selectedAppointment, services) : 0;
   const selectedWhatsappUrl = selectedAppointment ? buildWhatsappUrl(selectedAppointment.clientTelephone) : null;
   const selectedWhatsappLabel =
     selectedAppointment && selectedAppointment.clientTelephone
@@ -405,7 +447,7 @@ export default function AgendaBarbeiroPage() {
                     {nextAppointment.client}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" noWrap>
-                    {nextAppointment.service}
+                    {getAppointmentServiceLabel(nextAppointment)}
                   </Typography>
                 </Box>
                 <IconButton color="primary" sx={{ alignSelf: "center", flexShrink: 0 }}>
@@ -500,7 +542,7 @@ export default function AgendaBarbeiroPage() {
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                           <ContentCutIcon fontSize="small" color="action" />
                           <Typography variant="body2" color="text.secondary" noWrap>
-                            {appointment.service}
+                            {getAppointmentServiceLabel(appointment)}
                           </Typography>
                         </Box>
                       </Box>
@@ -599,7 +641,7 @@ export default function AgendaBarbeiroPage() {
 
             <DialogContent sx={{ pt: 1 }}>
               <Stack spacing={2} divider={<Divider flexItem />}>
-                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5, alignItems: "center" }}>
                   <AccessTimeIcon color="primary" />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
@@ -612,7 +654,7 @@ export default function AgendaBarbeiroPage() {
                   </Box>
                 </Box>
 
-                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5, alignItems: "center" }}>
                   <PersonIcon color="primary" />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
@@ -622,39 +664,21 @@ export default function AgendaBarbeiroPage() {
                     <Typography variant="body2" color="text.secondary">
                       {selectedWhatsappLabel}
                     </Typography>
-                    {selectedWhatsappUrl && (
-                      <Button
-                        href={selectedWhatsappUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        startIcon={<WhatsAppIcon />}
-                        variant="outlined"
-                        size="small"
-                        fullWidth={isMobile}
-                        sx={{
-                          mt: 1,
-                          justifyContent: "center",
-                          borderColor: "rgba(37, 211, 102, 0.45)",
-                          color: "#128C7E",
-                          "&:hover": {
-                            borderColor: "#128C7E",
-                            bgcolor: "rgba(37, 211, 102, 0.08)",
-                          },
-                        }}
-                      >
-                        Chamar no WhatsApp
-                      </Button>
-                    )}
                   </Box>
                 </Box>
 
-                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5, alignItems: "center" }}>
                   <ContentCutIcon color="primary" />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
                       Serviço
                     </Typography>
-                    <Typography fontWeight={800}>{selectedAppointment.service}</Typography>
+                    <Typography fontWeight={800}>{selectedServiceLabel}</Typography>
+                    {selectedDuration > 0 && (
+                      <Typography variant="body2" color="text.secondary">
+                        Duração: {formatDuration(selectedDuration)}
+                      </Typography>
+                    )}
                     <Typography variant="body2" color="text.secondary">
                       {selectedPrice !== undefined ? formatCurrency(selectedPrice) : "Valor não informado"}
                     </Typography>
@@ -663,37 +687,56 @@ export default function AgendaBarbeiroPage() {
               </Stack>
             </DialogContent>
 
-            <DialogActions sx={{ p: 2, pt: 0, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
-              {selectedAppointment.status === "SCHEDULED" && (
-                <>
+            <DialogActions sx={{ p: 2, pt: 0, display: "block" }}>
+              <Stack spacing={1}>
+                {selectedWhatsappUrl && (
                   <Button
+                    href={selectedWhatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    startIcon={<WhatsAppIcon />}
                     variant="contained"
                     color="success"
-                    onClick={handleAttend}
-                    disabled={actionLoading}
                     fullWidth
+                    sx={{ minHeight: 42 }}
                   >
-                    {actionLoading ? "Processando..." : "Concluir"}
+                    Chamar no WhatsApp
                   </Button>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    onClick={() => setCancelDialogOpen(true)}
-                    disabled={actionLoading}
-                    fullWidth
-                  >
-                    Cancelar
-                  </Button>
-                </>
-              )}
-              <Button
-                variant={selectedAppointment.status === "SCHEDULED" ? "text" : "contained"}
-                onClick={() => setSelectedAppointment(null)}
-                disabled={actionLoading}
-                fullWidth
-              >
-                Fechar
-              </Button>
+                )}
+                {selectedAppointment.status === "SCHEDULED" && (
+                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      onClick={handleAttend}
+                      disabled={actionLoading}
+                      fullWidth
+                      sx={{ minHeight: 42, whiteSpace: "nowrap" }}
+                    >
+                      {actionLoading ? "Processando..." : "Concluir"}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      onClick={() => setCancelDialogOpen(true)}
+                      disabled={actionLoading}
+                      fullWidth
+                      sx={{ minHeight: 42, whiteSpace: "nowrap" }}
+                    >
+                      Cancelar
+                    </Button>
+                  </Box>
+                )}
+                <Button
+                  variant={selectedAppointment.status === "SCHEDULED" || selectedWhatsappUrl ? "text" : "contained"}
+                  onClick={() => setSelectedAppointment(null)}
+                  disabled={actionLoading}
+                  fullWidth
+                  sx={{ minHeight: 42 }}
+                >
+                  Fechar
+                </Button>
+              </Stack>
             </DialogActions>
           </>
         )}
