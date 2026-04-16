@@ -14,6 +14,10 @@ export interface Reserva {
   barber: string;
   barberTelephone?: string | null;
   service: string;
+  serviceNames?: string[];
   time: string;
+  endTime?: string;
   status: ReservaStatus;
+  price?: number;
+  duration?: number;
 }

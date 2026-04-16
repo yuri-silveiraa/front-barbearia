@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import PersonIcon from "@mui/icons-material/Person";
@@ -40,6 +41,20 @@ const statusConfig: Record<ReservaStatus, StatusConfig> = {
   CANCELED: { color: "error", label: "Cancelada" },
 };
 
+const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+
+function formatDuration(minutes: number) {
+  if (!minutes || minutes <= 0) return "0m";
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours > 0 && rest > 0) return `${hours}h ${rest}min`;
+  if (hours > 0) return `${hours}h`;
+  return `${rest}min`;
+}
+
 function isFutureScheduled(reserva: Reserva) {
   return reserva.status === "SCHEDULED" && new Date(reserva.time).getTime() >= Date.now();
 }
@@ -52,16 +67,22 @@ export function ListaReservasPage() {
   const [selectedReserva, setSelectedReserva] = useState<Reserva | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [canceling, setCanceling] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const navigate = useNavigate();
   const hasFetched = useRef(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  async function carregar() {
+  async function carregar(pageNumber = 1) {
     try {
       setLoading(true);
-      const response = await getReservas();
-      setReservas(response);
+      const response = await getReservas(pageNumber, 10);
+      setReservas(response.data);
+      setTotalPages(response.totalPages);
+      setTotal(response.total);
+      setPage(response.page);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao carregar reservas";
@@ -81,7 +102,6 @@ export function ListaReservasPage() {
     () => ({
       next: reservas.filter(isFutureScheduled).length,
       completed: reservas.filter((reserva) => reserva.status === "COMPLETED").length,
-      canceled: reservas.filter((reserva) => reserva.status === "CANCELED").length,
     }),
     [reservas]
   );
@@ -93,17 +113,6 @@ export function ListaReservasPage() {
         .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())[0] ?? null,
     [reservas]
   );
-
-  const orderedReservas = useMemo(() => {
-    const upcoming = reservas
-      .filter(isFutureScheduled)
-      .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-    const history = reservas
-      .filter((reserva) => !isFutureScheduled(reserva))
-      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-
-    return [...upcoming, ...history];
-  }, [reservas]);
 
   const formatReservaDate = (value: string) =>
     new Date(value).toLocaleString("pt-BR", {
@@ -277,7 +286,7 @@ export function ListaReservasPage() {
             </Paper>
           )}
 
-          {orderedReservas.length === 0 ? (
+          {reservas.length === 0 ? (
             <Paper
           elevation={0}
           sx={{
@@ -311,17 +320,14 @@ export function ListaReservasPage() {
             overflow: "hidden",
           }}
         >
-          <Box sx={{ p: { xs: 2, sm: 2.5 }, pb: 1 }}>
-            <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
-              Lista
-            </Typography>
-            <Typography variant="subtitle1" fontWeight={700}>
+          <Box sx={{ p: { xs: 2, sm: 2.5 }, pb: 1, textAlign: "center" }}>
+            <Typography variant="h6" fontWeight={800}>
               Todos os agendamentos
             </Typography>
           </Box>
 
           <Stack divider={<Divider flexItem />}>
-            {orderedReservas.map((reserva) => {
+            {reservas.map((reserva) => {
               const config = statusConfig[reserva.status];
 
               return (
@@ -347,7 +353,9 @@ export function ListaReservasPage() {
                 >
                   <Box sx={{ minWidth: 0 }}>
                     <Typography fontWeight={800} noWrap>
-                      {reserva.service}
+                      {reserva.serviceNames && reserva.serviceNames.length > 1
+                        ? reserva.serviceNames.join(" + ")
+                        : reserva.service}
                     </Typography>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.75 }}>
                       <PersonIcon fontSize="small" color="action" />
@@ -376,6 +384,30 @@ export function ListaReservasPage() {
               );
             })}
           </Stack>
+            
+            {totalPages > 1 && (
+              <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mt: 3, mb: 2, alignItems: "center" }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  disabled={page === 1}
+                  onClick={() => carregar(page - 1)}
+                >
+                  Anterior
+                </Button>
+                <Typography variant="body2" color="text.secondary">
+                  {page} / {totalPages}
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  disabled={page === totalPages}
+                  onClick={() => carregar(page + 1)}
+                >
+                  Próximo
+                </Button>
+              </Box>
+            )}
             </Paper>
           )}
         </>
@@ -416,7 +448,7 @@ export function ListaReservasPage() {
 
             <DialogContent sx={{ pt: 1 }}>
               <Stack spacing={2} divider={<Divider flexItem />}>
-                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5, alignItems: "center" }}>
                   <CalendarMonthIcon color="primary" />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
@@ -429,7 +461,7 @@ export function ListaReservasPage() {
                   </Box>
                 </Box>
 
-                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5, alignItems: "center" }}>
                   <PersonIcon color="primary" />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
@@ -442,15 +474,53 @@ export function ListaReservasPage() {
                   </Box>
                 </Box>
 
-                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5, alignItems: "center" }}>
                   <ContentCutIcon color="primary" />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
                       Serviço
                     </Typography>
-                    <Typography fontWeight={800}>{selectedReserva.service}</Typography>
+                    {selectedReserva.serviceNames && selectedReserva.serviceNames.length > 1 ? (
+                      <Box>
+                        {selectedReserva.serviceNames.map((name, index) => (
+                          <Typography key={index} fontWeight={800}>
+                            {name}
+                          </Typography>
+                        ))}
+                      </Box>
+                    ) : (
+                      <Typography fontWeight={800}>{selectedReserva.service}</Typography>
+                    )}
                   </Box>
                 </Box>
+
+                {selectedReserva.duration && (
+                  <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5, alignItems: "center" }}>
+                    <ScheduleIcon color="primary" />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Duração
+                      </Typography>
+                      <Typography fontWeight={800}>
+                        {formatDuration(selectedReserva.duration)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                {selectedReserva.price && (
+                  <Box sx={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr)", gap: 1.5, alignItems: "center" }}>
+                    <AttachMoneyIcon color="primary" />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Valor
+                      </Typography>
+                      <Typography fontWeight={800}>
+                        {currencyFormatter.format(selectedReserva.price)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
               </Stack>
             </DialogContent>
 

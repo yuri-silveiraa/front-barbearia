@@ -73,7 +73,7 @@ const SelectBarber: FC<SelectBarberProps> = ({
               onClick={() => onChange(barber.id)}
               sx={{
                 width: "100%",
-                p: 1.5,
+                p: 3,
                 borderRadius: 2,
                 border: "1px solid",
                 borderColor: selected ? "primary.main" : "divider",
@@ -81,8 +81,8 @@ const SelectBarber: FC<SelectBarberProps> = ({
                 color: "inherit",
                 cursor: loading ? "default" : "pointer",
                 display: "grid",
-                gridTemplateColumns: "44px minmax(0, 1fr) auto",
-                gap: 1.5,
+                gridTemplateColumns: "100px minmax(0, 1fr) auto",
+                gap: 2.5,
                 alignItems: "center",
                 textAlign: "left",
                 transition: "background-color 0.2s ease, border-color 0.2s ease",
@@ -92,19 +92,16 @@ const SelectBarber: FC<SelectBarberProps> = ({
               <Avatar
                 src={barber.profileImageUrl || undefined}
                 alt={barber.name}
-                sx={{ width: 44, height: 44, bgcolor: selected ? "primary.main" : "action.hover" }}
+                sx={{ width: 100, height: 100, bgcolor: selected ? "primary.main" : "action.hover" }}
               >
                 {getInitials(barber.name)}
               </Avatar>
               <Box sx={{ minWidth: 0 }}>
-                <Typography fontWeight={800} noWrap>
+                <Typography variant="h5" fontWeight={800} noWrap>
                   {barber.name}
                 </Typography>
-                <Typography variant="caption" color="text.secondary" noWrap>
-                  {barber.specialties?.length ? barber.specialties.join(", ") : "Barbeiro"}
-                </Typography>
               </Box>
-              {selected && <CheckCircleIcon color="primary" />}
+              {selected && <CheckCircleIcon color="primary" sx={{ fontSize: 28 }} />}
             </Paper>
           );
         })}
