@@ -61,6 +61,7 @@ function ServicoFormDialog({
   const [preco, setPreco] = useState<number | string>(
     typeof initialData?.preço === "string" ? parseFloat(initialData.preço) : (initialData?.preço ?? 0)
   );
+  const [duration, setDuration] = useState<number | string>(initialData?.duration ?? initialData?.durationMinutes ?? 30);
   const [imagemArquivo, setImagemArquivo] = useState<File | null>(null);
   const [imagemPreview, setImagemPreview] = useState<string | null>(initialData?.imagemUrl ?? null);
   const [removerImagem, setRemoverImagem] = useState(false);
@@ -113,6 +114,7 @@ function ServicoFormDialog({
       nome,
       descrição: descricao || undefined,
       preço: Number(preco),
+      duration: Number(duration),
       imagemArquivo,
       removerImagem,
     });
@@ -168,6 +170,15 @@ function ServicoFormDialog({
                   </InputAdornment>
                 ),
               }}
+            />
+            <TextField
+              label="Duração (min)"
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              fullWidth
+              required
+              inputProps={{ min: 5, max: 480, step: 5 }}
             />
 
             <Box

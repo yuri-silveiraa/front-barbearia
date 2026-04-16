@@ -27,7 +27,7 @@ interface MobileTabBarProps {
 
 const clientItems = [
   { label: "Home", path: "/home", icon: <HomeIcon /> },
-  { label: "Reservas", path: "/reservas", icon: <CalendarMonthIcon /> },
+  { label: "Agendamentos", path: "/reservas", icon: <CalendarMonthIcon /> },
   { label: "Perfil", path: "/perfil", icon: <PersonIcon /> },
 ];
 
@@ -35,6 +35,7 @@ const barberItems = [
   { label: "Agenda", path: "/agenda", icon: <CalendarMonthIcon /> },
   { label: "Agendamentos", path: "/agenda/periodo", icon: <CalendarMonthIcon /> },
   { label: "Horários", path: "/horarios", icon: <ScheduleIcon /> },
+  { label: "Serviços", path: "/servicos", icon: <ContentCutIcon /> },
   { label: "Financeiro", path: "/financeiro", icon: <PaidIcon /> },
   { label: "Perfil", path: "/perfil", icon: <PersonIcon /> },
 ];

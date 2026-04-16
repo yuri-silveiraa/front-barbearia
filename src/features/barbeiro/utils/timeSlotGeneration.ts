@@ -3,7 +3,6 @@ import type { GenerateTimeSlotsParams, ValidationResult } from "../../../api/tim
 export interface TimeGenerationConfig {
   startTime: string;
   endTime: string;
-  blockDuration: number;
   hasInterval: boolean;
   intervalStart: string;
   intervalDuration: number;
@@ -12,7 +11,6 @@ export interface TimeGenerationConfig {
 export function buildGenerateTimeSlotsParams(
   config: TimeGenerationConfig,
   selectedDays: string[],
-  confirmRemainder = false
 ): GenerateTimeSlotsParams | null {
   if (selectedDays.length === 0) {
     return null;
@@ -22,7 +20,6 @@ export function buildGenerateTimeSlotsParams(
   const params: GenerateTimeSlotsParams = {
     startTime: config.startTime,
     endTime: config.endTime,
-    blockDuration: config.blockDuration,
     startDate: sortedDays[0],
     endDate: sortedDays[sortedDays.length - 1],
     selectedDates: sortedDays,
@@ -32,19 +29,9 @@ export function buildGenerateTimeSlotsParams(
     params.intervalStart = config.intervalStart;
     params.intervalDuration = config.intervalDuration;
   }
-
-  if (confirmRemainder) {
-    params.confirmRemainder = true;
-  }
-
   return params;
 }
 
 export function getRemainderWarningText(validation: ValidationResult): string {
-  const warning = validation.warning;
-  if (!warning) {
-    return "";
-  }
-
-  return `${warning.message} Se prosseguir, os horários serão criados até ${warning.lastBlockEnd}.`;
+  return validation.error ?? "";
 }

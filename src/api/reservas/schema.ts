@@ -5,5 +5,5 @@ export const reservaPayloadSchema = z.object({
   clientId: z.string().uuid('ID do cliente inválido'),
   barberId: z.string().uuid('ID do barbeiro inválido'),
   serviceId: z.string().uuid('ID do serviço inválido'),
-  timeId: z.string().uuid('ID do horário inválido'),
+  startAt: z.string().min(1, "Horário obrigatório"),
 }) satisfies z.ZodSchema<ReservaPayload>;

@@ -10,6 +10,7 @@ export interface Barber {
 
 export interface Service {
   id: string;
+  barberId?: string;
   name: string;
   description?: string;
   price: number;
@@ -22,11 +23,20 @@ export interface TimeSlot {
   id: string;
   data: string;
   date?: string;
+  startAt?: string;
+  endAt?: string;
 }
 
 export interface ReservaPayload {
   clientId: string;
   barberId: string;
-  serviceId: string;
-  timeId: string;
+  serviceIds: string[];
+  startAt: string;
+}
+
+export interface PaginatedReservas {
+  data: Reserva[];
+  total: number;
+  page: number;
+  totalPages: number;
 }

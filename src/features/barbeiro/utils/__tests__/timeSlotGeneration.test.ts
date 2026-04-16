@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildGenerateTimeSlotsParams, getRemainderWarningText } from "../timeSlotGeneration";
+import { buildGenerateTimeSlotsParams } from "../timeSlotGeneration";
 
 const config = {
   startTime: "08:00",
   endTime: "21:00",
-  blockDuration: 45,
   hasInterval: false,
   intervalStart: "12:00",
   intervalDuration: 60,
@@ -21,22 +20,22 @@ describe("timeSlotGeneration", () => {
     });
   });
 
-  it("inclui confirmação de sobra somente quando o barbeiro prossegue", () => {
-    expect(buildGenerateTimeSlotsParams(config, ["2026-04-10"])?.confirmRemainder).toBeUndefined();
-    expect(buildGenerateTimeSlotsParams(config, ["2026-04-10"], true)?.confirmRemainder).toBe(true);
+  it("não envia duração de bloco porque a duração vem do serviço", () => {
+    const params = buildGenerateTimeSlotsParams(config, ["2026-04-10"]);
+
+    expect(params).not.toHaveProperty("blockDuration");
+    expect(params).not.toHaveProperty("confirmRemainder");
   });
 
-  it("monta texto de aviso de sobra com último horário completo", () => {
-    const text = getRemainderWarningText({
-      isValid: true,
-      warning: {
-        message: "Sobrarão 15 minutos.",
-        remainderMinutes: 15,
-        lastBlockEnd: "20:45",
-      },
-    });
+  it("envia intervalo somente quando a jornada tem pausa", () => {
+    const params = buildGenerateTimeSlotsParams({
+      ...config,
+      hasInterval: true,
+    }, ["2026-04-10"]);
 
-    expect(text).toContain("Sobrarão 15 minutos.");
-    expect(text).toContain("20:45");
+    expect(params).toMatchObject({
+      intervalStart: "12:00",
+      intervalDuration: 60,
+    });
   });
 });

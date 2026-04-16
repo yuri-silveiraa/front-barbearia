@@ -3,29 +3,26 @@ import { api } from "../http";
 export interface GenerateTimeSlotsParams {
   startTime: string;
   endTime: string;
-  blockDuration: number;
   intervalStart?: string;
   intervalDuration?: number;
   startDate: string;
   endDate: string;
   selectedDates?: string[];
   excludeDays?: number[];
-  confirmRemainder?: boolean;
 }
 
 export interface TimeSlot {
   id: string;
-  date: string;
+  date?: string;
+  startAt: string;
+  endAt: string;
+  breakStartAt?: string | null;
+  breakEndAt?: string | null;
 }
 
 export interface ValidationResult {
   isValid: boolean;
   error?: string;
-  warning?: {
-    message: string;
-    remainderMinutes: number;
-    lastBlockEnd: string;
-  };
 }
 
 export interface GenerateTimeSlotsResponse {

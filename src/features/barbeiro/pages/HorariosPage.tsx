@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
   Box,
   Button,
   Checkbox,
@@ -13,7 +12,6 @@ import {
   Drawer,
   FormControlLabel,
   IconButton,
-  MenuItem,
   Paper,
   Popover,
   Stack,
@@ -44,8 +42,8 @@ import {
 } from "../../../api/time/time.service";
 import { FeedbackBanner } from "../../../components/FeedbackBanner";
 import { MetricsSkeleton } from "../../../components/skeletons/AppSkeletons";
-import type { GenerateTimeSlotsParams, TimeSlot, ValidationResult } from "../../../api/time/time.service";
-import { buildGenerateTimeSlotsParams, getRemainderWarningText } from "../utils/timeSlotGeneration";
+import type { TimeSlot } from "../../../api/time/time.service";
+import { buildGenerateTimeSlotsParams } from "../utils/timeSlotGeneration";
 
 dayjs.locale("pt-br");
 
@@ -54,7 +52,6 @@ const STORAGE_KEY = "barber_time_config";
 interface TimeConfig {
   startTime: string;
   endTime: string;
-  blockDuration: number;
   hasInterval: boolean;
   intervalStart: string;
   intervalDuration: number;
@@ -63,20 +60,10 @@ interface TimeConfig {
 const defaultConfig: TimeConfig = {
   startTime: "08:00",
   endTime: "21:00",
-  blockDuration: 30,
   hasInterval: false,
   intervalStart: "12:00",
   intervalDuration: 60,
 };
-
-const blockDurationOptions = [
-  { value: 15, label: "15 min" },
-  { value: 30, label: "30 min" },
-  { value: 45, label: "45 min" },
-  { value: 60, label: "1 hora" },
-  { value: 90, label: "1h30min" },
-  { value: 120, label: "2 horas" },
-];
 
 function TimeSelect({
   value,
@@ -115,7 +102,11 @@ function formatDateLabel(date: string) {
 }
 
 function formatSlotTime(slot: TimeSlot) {
-  return dayjs(slot.date).format("HH:mm");
+  return dayjs(slot.startAt).format("HH:mm");
+}
+
+function formatSlotRange(slot: TimeSlot) {
+  return `${dayjs(slot.startAt).format("HH:mm")} - ${dayjs(slot.endAt).format("HH:mm")}`;
 }
 
 export default function HorariosPage() {
@@ -125,8 +116,6 @@ export default function HorariosPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [warningDialog, setWarningDialog] = useState<ValidationResult | null>(null);
-  const [pendingParams, setPendingParams] = useState<GenerateTimeSlotsParams | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [selectedDayAnchor, setSelectedDayAnchor] = useState<{ el: HTMLElement | null; date: string } | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
@@ -201,7 +190,7 @@ export default function HorariosPage() {
   const daysWithSlots = useMemo(() => {
     const days = new Set<string>();
     timeSlots.forEach((slot) => {
-      days.add(dayjs(slot.date).format("YYYY-MM-DD"));
+      days.add(dayjs(slot.startAt).format("YYYY-MM-DD"));
     });
     return days;
   }, [timeSlots]);
@@ -226,11 +215,11 @@ export default function HorariosPage() {
 
   const getSlotsForDay = (dateStr: string) =>
     timeSlots
-      .filter((slot) => dayjs(slot.date).format("YYYY-MM-DD") === dateStr)
-      .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix());
+      .filter((slot) => dayjs(slot.startAt).format("YYYY-MM-DD") === dateStr)
+      .sort((a, b) => dayjs(a.startAt).unix() - dayjs(b.startAt).unix());
 
   const upcomingSlots = useMemo(
-    () => timeSlots.filter((slot) => dayjs(slot.date).isAfter(dayjs())).length,
+    () => timeSlots.filter((slot) => dayjs(slot.endAt).isAfter(dayjs())).length,
     [timeSlots]
   );
   const nextWorkDay = useMemo(
@@ -266,14 +255,8 @@ export default function HorariosPage() {
         return;
       }
 
-      if (response.validation.warning) {
-        setWarningDialog(response.validation);
-        setPendingParams(params);
-        return;
-      }
-
       if (response.validation.isValid) {
-        setSuccess(`Gerados ${response.timeSlots.length} horários com sucesso!`);
+        setSuccess(`Criadas ${response.timeSlots.length} jornadas com sucesso!`);
         setSelectedDays([]);
         await loadTimeSlots();
       }
@@ -282,37 +265,6 @@ export default function HorariosPage() {
       setError(message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleWarningConfirm = async () => {
-    if (!pendingParams) return;
-
-    try {
-      setLoading(true);
-      setWarningDialog(null);
-
-      const response = await generateTimeSlots({
-        ...pendingParams,
-        confirmRemainder: true,
-      });
-
-      if (!response.validation.isValid && response.validation.error) {
-        setError(response.validation.error);
-        return;
-      }
-
-      if (response.validation.isValid) {
-        setSuccess(`Gerados ${response.timeSlots.length} horários com sucesso!`);
-        setSelectedDays([]);
-        await loadTimeSlots();
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro ao gerar horários";
-      setError(message);
-    } finally {
-      setLoading(false);
-      setPendingParams(null);
     }
   };
 
@@ -393,6 +345,9 @@ export default function HorariosPage() {
                     }}
                   >
                     <Typography fontWeight={800}>{formatSlotTime(slot)}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {formatSlotRange(slot)}
+                    </Typography>
                   </Paper>
                 );
               })}
@@ -441,7 +396,7 @@ export default function HorariosPage() {
           Gerenciar agenda
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Crie blocos de atendimento e acompanhe os dias disponíveis.
+          Crie jornadas de atendimento e acompanhe os dias disponíveis.
         </Typography>
       </Box>
 
@@ -457,9 +412,9 @@ export default function HorariosPage() {
         }}
       >
         {[
-          { label: "Horários futuros", value: upcomingSlots, icon: <AccessTimeIcon fontSize="small" /> },
+          { label: "Jornadas futuras", value: upcomingSlots, icon: <AccessTimeIcon fontSize="small" /> },
           { label: "Dias ativos", value: daysWithSlots.size, icon: <EventAvailableIcon fontSize="small" /> },
-          { label: "Bloco", value: `${config.blockDuration} min`, icon: <CalendarMonthIcon fontSize="small" /> },
+          { label: "Intervalo", value: config.hasInterval ? `${config.intervalDuration} min` : "Sem", icon: <RestaurantIcon fontSize="small" /> },
           { label: "Próximo dia", value: nextWorkDay ? dayjs(nextWorkDay).format("DD/MM") : "--", icon: <CalendarMonthIcon fontSize="small" /> },
         ].map((item) => (
           <Paper
@@ -528,22 +483,6 @@ export default function HorariosPage() {
                 value={config.endTime}
                 onChange={(time) => saveConfig({ ...config, endTime: time })}
               />
-              <Box sx={{ gridColumn: "1 / -1" }}>
-                <TextField
-                  select
-                  label="Duração do atendimento"
-                  value={config.blockDuration}
-                  onChange={(event) => saveConfig({ ...config, blockDuration: Number(event.target.value) })}
-                  fullWidth
-                  size="small"
-                >
-                  {blockDurationOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Box>
             </Box>
 
             <FormControlLabel
@@ -596,7 +535,7 @@ export default function HorariosPage() {
             }}
           >
             <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
-              Criar horários
+              Criar jornadas
             </Typography>
             <Typography variant="subtitle1" fontWeight={800}>
               Selecione os dias
@@ -634,7 +573,7 @@ export default function HorariosPage() {
               fullWidth
               sx={{ mt: 2, minHeight: 44 }}
             >
-              {loading ? "Gerando..." : "Gerar horários"}
+              {loading ? "Gerando..." : "Criar jornadas"}
             </Button>
           </Paper>
         </Stack>
@@ -652,13 +591,13 @@ export default function HorariosPage() {
           <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2, mb: 1.5 }}>
             <Box>
               <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0 }}>
-                Horários criados
+                Jornadas criadas
               </Typography>
               <Typography variant="subtitle1" fontWeight={800}>
                 Calendário disponível
               </Typography>
             </Box>
-            <Chip label={`${upcomingSlots} horários`} size="small" variant="outlined" />
+            <Chip label={`${upcomingSlots} jornadas`} size="small" variant="outlined" />
           </Box>
 
           {loadingSlots ? (
@@ -680,7 +619,7 @@ export default function HorariosPage() {
             >
               <CalendarMonthIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
-                Nenhum horário cadastrado
+                Nenhuma jornada cadastrada
               </Typography>
               <Typography variant="body2" color="text.disabled">
                 Configure sua jornada e selecione os dias para começar.
@@ -738,30 +677,6 @@ export default function HorariosPage() {
           {slotManager}
         </Popover>
       )}
-
-      <Dialog
-        open={!!warningDialog}
-        onClose={() => { setWarningDialog(null); setPendingParams(null); }}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { bgcolor: "background.paper", borderRadius: 2 } }}
-      >
-        <DialogTitle>Atenção</DialogTitle>
-        <DialogContent>
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            {warningDialog ? getRemainderWarningText(warningDialog) : ""}
-          </Alert>
-          <Typography variant="body2" color="text.secondary">
-            Se preferir blocos fechados sem sobra, ajuste o horário final ou a duração do atendimento antes de prosseguir.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => { setWarningDialog(null); setPendingParams(null); }}>Ajustar horários</Button>
-          <Button variant="contained" onClick={handleWarningConfirm}>
-            Prosseguir
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <Dialog
         open={deleteDialog.open}

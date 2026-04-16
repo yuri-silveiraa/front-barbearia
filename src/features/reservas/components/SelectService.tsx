@@ -1,14 +1,13 @@
 import { type FC } from "react";
-import { Box, Paper, Typography } from "@mui/material";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { Box, Chip, Paper, Typography } from "@mui/material";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import { SelectionListSkeleton } from "../../../components/skeletons/SelectionSkeletons";
 import type { Service } from "../../../api/reservas/types";
 
 interface SelectServiceProps {
   services: Service[];
-  value: string;
-  onChange: (value: string) => void;
+  value: string[];
+  onChange: (value: string[]) => void;
   loading: boolean;
   error?: string;
 }
@@ -18,6 +17,15 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
+function formatDuration(minutes: number) {
+  if (!minutes || minutes <= 0) return "Duração sob consulta";
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours > 0 && rest > 0) return `${hours}h${rest}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${rest}m`;
+}
+
 const SelectService: FC<SelectServiceProps> = ({
   services,
   value,
@@ -25,6 +33,14 @@ const SelectService: FC<SelectServiceProps> = ({
   loading,
   error,
 }) => {
+  const handleToggle = (serviceId: string) => {
+    if (value.includes(serviceId)) {
+      onChange(value.filter((id) => id !== serviceId));
+    } else {
+      onChange([...value, serviceId]);
+    }
+  };
+
   if (loading) {
     return <SelectionListSkeleton />;
   }
@@ -50,15 +66,15 @@ const SelectService: FC<SelectServiceProps> = ({
   return (
     <Box>
       <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 0.5 }}>
-        Escolha o serviço
+        Escolha os serviços
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        O preço fica destacado para você confirmar antes do horário.
+        Selecione um ou mais serviços. A duração total define os horários disponíveis.
       </Typography>
 
       <Box sx={{ display: "grid", gap: 1.25 }}>
         {services.map((service) => {
-          const selected = value === service.id;
+          const selected = value.includes(service.id);
 
           return (
             <Paper
@@ -67,7 +83,7 @@ const SelectService: FC<SelectServiceProps> = ({
               type="button"
               elevation={0}
               disabled={loading}
-              onClick={() => onChange(service.id)}
+              onClick={() => handleToggle(service.id)}
               sx={{
                 width: "100%",
                 p: 1.5,
@@ -78,7 +94,7 @@ const SelectService: FC<SelectServiceProps> = ({
                 color: "inherit",
                 cursor: loading ? "default" : "pointer",
                 display: "grid",
-                gridTemplateColumns: "minmax(0, 1fr) auto",
+                gridTemplateColumns: service.imagemUrl ? "72px minmax(0, 1fr) auto" : "minmax(0, 1fr) auto",
                 gap: 1.5,
                 alignItems: "center",
                 textAlign: "left",
@@ -86,6 +102,20 @@ const SelectService: FC<SelectServiceProps> = ({
                 "&:hover": loading ? undefined : { borderColor: "primary.main" },
               }}
             >
+              {service.imagemUrl && (
+                <Box
+                  component="img"
+                  src={service.imagemUrl}
+                  alt={service.name}
+                  sx={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: "8px",
+                    objectFit: "cover",
+                    bgcolor: "action.hover",
+                  }}
+                />
+              )}
               <Box sx={{ minWidth: 0 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.5 }}>
                   <ContentCutIcon color="primary" fontSize="small" />
@@ -98,15 +128,12 @@ const SelectService: FC<SelectServiceProps> = ({
                     {service.description}
                   </Typography>
                 )}
-                <Typography variant="caption" color="text.secondary">
-                  {service.duration > 0 ? `${service.duration} min` : "Duração sob consulta"}
-                </Typography>
+                <Chip size="small" label={formatDuration(service.duration)} variant="outlined" />
               </Box>
-              <Box sx={{ display: "grid", justifyItems: "end", gap: 0.75 }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
                 <Typography fontWeight={900} color="primary.main">
                   {currencyFormatter.format(service.price)}
                 </Typography>
-                {selected && <CheckCircleIcon color="primary" />}
               </Box>
             </Paper>
           );

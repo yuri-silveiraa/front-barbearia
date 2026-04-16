@@ -30,6 +30,13 @@ export function CardServico({
       currency: "BRL",
     }).format(num);
   };
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    if (hours > 0 && rest > 0) return `${hours}h${rest}m`;
+    if (hours > 0) return `${hours}h`;
+    return `${rest}m`;
+  };
 
   return (
     <Card
@@ -101,7 +108,10 @@ export function CardServico({
                 {service.descrição || "Sem descrição cadastrada."}
               </Typography>
               <Box sx={{ mt: "auto", pt: 1 }}>
-                <Chip label={formatCurrency(service.preço)} color="primary" size="small" sx={{ fontWeight: 800 }} />
+                <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
+                  <Chip label={formatCurrency(service.preço)} color="primary" size="small" sx={{ fontWeight: 800 }} />
+                  <Chip label={formatDuration(service.duration)} variant="outlined" size="small" />
+                </Stack>
               </Box>
             </Box>
           </Box>

@@ -15,16 +15,17 @@ export interface BarberAppointment {
 
 export interface TimeSlot {
   id: string;
-  date: string;
+  date?: string;
+  startAt: string;
+  endAt: string;
   data?: string;
-  disponible?: boolean;
 }
 
 export interface ManualAppointmentPayload {
   customerName: string;
   customerWhatsapp: string;
   serviceId: string;
-  timeId: string;
+  startAt: string;
 }
 
 export interface BarberRevenueAppointment {

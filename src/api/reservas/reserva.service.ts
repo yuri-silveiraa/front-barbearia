@@ -151,17 +151,19 @@ function normalizeService(raw: UnknownRecord): Service {
 
   return {
     id: readString(raw, ["id", "_id", "uuid", "serviceId"]),
+    barberId: readOptionalString(raw, ["barberId"]),
     name: readString(raw, ["name", "nome", "title", "serviceName"], "Serviço sem nome"),
     description,
     price: readNumber(raw, ["price", "preco", "preço", "valor", "amount"]),
     duration: readNumber(raw, ["duration", "duracao", "minutes"], 0),
     category: readOptionalString(raw, ["category", "categoria"]),
-    imagemUrl: imagemUrl ?? null,
+    imagemUrl: resolveApiImageUrl(imagemUrl),
   };
 }
 
 function normalizeTimeSlot(raw: UnknownRecord): TimeSlot {
   const dateTime = readString(raw, [
+    "startAt",
     "data",
     "date",
     "datetime",
@@ -174,13 +176,50 @@ function normalizeTimeSlot(raw: UnknownRecord): TimeSlot {
   return {
     id: readString(raw, ["id", "_id", "uuid", "timeId"]),
     data: dateTime,
-    date: readOptionalString(raw, ["date", "data", "datetime", "dateTime", "startAt", "start_at", "start"]),
+    date: readOptionalString(raw, ["startAt", "date", "data", "datetime", "dateTime", "start_at", "start"]),
+    startAt: readOptionalString(raw, ["startAt", "date", "data", "datetime", "dateTime", "start_at", "start"]),
+    endAt: readOptionalString(raw, ["endAt", "end", "finishAt"]),
   };
 }
 
-export async function getReservas(): Promise<Reserva[]> {
-  const { data } = await api.get("/appointment/client-appointments");
-  return data;
+export async function getReservas(page = 1, limit = 10): Promise<PaginatedReservas> {
+  const { data } = await api.get("/appointment/client-appointments", { 
+    params: { page, limit } 
+  });
+  
+  const rawReservas = Array.isArray(data.data) ? data.data : [];
+  const reservas = rawReservas.map(normalizeReserva);
+  
+  return {
+    data: reservas,
+    total: data.total || 0,
+    page: data.page || 1,
+    totalPages: data.totalPages || 1,
+  };
+}
+
+function normalizeReserva(raw: UnknownRecord): Reserva {
+  const time = readString(raw, ["time", "scheduledAt", "startAt"], "");
+  const endTime = readString(raw, ["endTime", "scheduledEndAt", "endAt"], "");
+  const price = readNumber(raw, ["price", "preco"], 0);
+  const duration = readNumber(raw, ["duration", "serviceDurationMinutes", "duracao"], 0);
+  const serviceNames = Array.isArray(raw.serviceNames) 
+    ? raw.serviceNames.filter((n): n is string => typeof n === "string")
+    : undefined;
+
+  return {
+    id: readString(raw, ["id", "_id"]),
+    client: readString(raw, ["client", "clientName", "customerName"]),
+    barber: readString(raw, ["barber", "barberName"]),
+    barberTelephone: readOptionalString(raw, ["barberTelephone", "barberPhone"]),
+    service: readString(raw, ["service", "serviceName"]),
+    serviceNames,
+    time,
+    endTime: endTime || undefined,
+    status: (raw.status as ReservaStatus) || "SCHEDULED",
+    price: price || undefined,
+    duration: duration || undefined,
+  };
 }
 
 export async function criarReserva(payload: ReservaPayload): Promise<Reserva> {
@@ -206,12 +245,18 @@ export async function getBarbers(): Promise<Barber[]> {
   return toRecordArray(data).map(normalizeBarber);
 }
 
-export async function getServices(): Promise<Service[]> {
-  const { data } = await api.get("/service");
+export async function getServices(barberId?: string): Promise<Service[]> {
+  const { data } = await api.get("/service", { params: barberId ? { barberId } : undefined });
   return toRecordArray(data).map(normalizeService);
 }
 
-export async function getTimesByBarber(barberId: string): Promise<TimeSlot[]> {
-  const { data } = await api.get(`/time/?barberId=${barberId}`);
+export async function getTimesByBarber(barberId: string, serviceIds: string | string[]): Promise<TimeSlot[]> {
+  const params: Record<string, string | string[]> = { barberId };
+  if (Array.isArray(serviceIds)) {
+    params.serviceIds = serviceIds.join(",");
+  } else {
+    params.serviceIds = serviceIds;
+  }
+  const { data } = await api.get("/time/", { params });
   return toRecordArray(data).map(normalizeTimeSlot);
 }

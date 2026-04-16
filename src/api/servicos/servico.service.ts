@@ -31,9 +31,10 @@ function resolveImageUrl(imageUrl?: string | null): string | null {
 }
 
 export async function getServices(): Promise<Service[]> {
-  const { data } = await api.get<Service[]>("/service");
+  const { data } = await api.get<Service[]>("/service/my-services");
   return data.map((service) => ({
     ...service,
+    duration: Number(service.duration ?? service.durationMinutes ?? 0),
     imagemUrl: resolveImageUrl(service.imagemUrl),
   }));
 }
@@ -43,6 +44,7 @@ export async function createService(data: CreateServiceData): Promise<Service> {
     name: data.nome,
     description: data.descrição,
     price: Number(data.preço),
+    durationMinutes: Number(data.duration),
     imageBase64: data.imagemArquivo ? await fileToBase64(data.imagemArquivo) : undefined,
     imageMimeType: data.imagemArquivo?.type || undefined,
   };
@@ -56,6 +58,7 @@ export async function updateService(data: UpdateServiceData): Promise<Service> {
   if (rest.nome !== undefined) body.name = rest.nome;
   if (rest.descrição !== undefined) body.description = rest.descrição;
   if (rest.preço !== undefined) body.price = Number(rest.preço);
+  if (rest.duration !== undefined) body.durationMinutes = Number(rest.duration);
   if (rest.imagemArquivo) {
     body.imageBase64 = await fileToBase64(rest.imagemArquivo);
     body.imageMimeType = rest.imagemArquivo.type;

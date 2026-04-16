@@ -15,6 +15,8 @@ export interface BarberAppointment {
 
 export interface TimeSlot {
   id: string;
-  date: string;
-  disponible: boolean;
+  date?: string;
+  startAt: string;
+  endAt: string;
+  data?: string;
 }

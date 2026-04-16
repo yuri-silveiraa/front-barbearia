@@ -65,7 +65,7 @@ function formatTime(timeStr: string) {
 }
 
 function getSlotDate(slot: TimeSlot): string {
-  return slot.date || slot.data || "";
+  return slot.startAt || slot.date || slot.data || "";
 }
 
 function formatSlotLabel(slot: TimeSlot) {
@@ -134,7 +134,7 @@ export default function AgendaBarbeiroPage() {
       const revenueAppointments = financeData.appointments || [];
       setAppointments(appointmentsData || []);
       setServices(servicesData);
-      setTimeSlots(timeSlotsData.filter((slot) => slot.disponible !== false));
+      setTimeSlots(timeSlotsData);
       setServicePrices(
         servicesData.reduce<Record<string, number>>((prices, service) => {
           const value = typeof service.preço === "string" ? Number(service.preço) : service.preço;
@@ -270,7 +270,7 @@ export default function AgendaBarbeiroPage() {
         customerName,
         customerWhatsapp,
         serviceId: manualForm.serviceId,
-        timeId: manualForm.timeId,
+        startAt: manualForm.timeId,
       });
       setManualDialogOpen(false);
       resetManualForm();
@@ -752,10 +752,10 @@ export default function AgendaBarbeiroPage() {
               value={manualForm.timeId}
               onChange={(event) => setManualForm((form) => ({ ...form, timeId: event.target.value }))}
               fullWidth
-              helperText={timeSlots.length === 0 ? "Crie horários disponíveis antes de agendar." : undefined}
+              helperText={timeSlots.length === 0 ? "Crie jornadas disponíveis antes de agendar." : undefined}
             >
               {timeSlots.map((slot) => (
-                <MenuItem key={slot.id} value={slot.id}>
+                <MenuItem key={slot.id} value={getSlotDate(slot)}>
                   {formatSlotLabel(slot)}
                 </MenuItem>
               ))}
