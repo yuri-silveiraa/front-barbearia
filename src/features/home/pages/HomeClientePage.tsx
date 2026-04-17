@@ -81,7 +81,7 @@ export default function HomeClientePage() {
         ]);
 
         if (!active) return;
-        setReservas(reservasData);
+        setReservas(reservasData.data);
         setServices(servicesData);
       } catch {
         if (active) {

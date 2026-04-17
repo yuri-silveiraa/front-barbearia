@@ -62,6 +62,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
         { label: "Horários", path: "/horarios", icon: <ScheduleIcon /> },
         { label: "Serviços", path: "/servicos", icon: <ContentCutIcon /> },
         { label: "Barbeiros", path: "/barbeiros", icon: <GroupIcon /> },
+        { label: "Clientes", path: "/clientes", icon: <PersonIcon /> },
       ]
     : [];
 

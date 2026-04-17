@@ -178,7 +178,7 @@ function ServicoFormDialog({
               onChange={(e) => setDuration(e.target.value)}
               fullWidth
               required
-              inputProps={{ min: 5, max: 480, step: 5 }}
+              inputProps={{ min: 15, max: 480, step: 5 }}
             />
 
             <Box

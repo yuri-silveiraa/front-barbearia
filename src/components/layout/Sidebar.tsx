@@ -102,6 +102,11 @@ const adminMenuItems = [
     path: "/barbeiros"
   },
   {
+    label: "Clientes",
+    icon: <PersonIcon />,
+    path: "/clientes"
+  },
+  {
     label: "Financeiro",
     icon: <PaidIcon />,
     path: "/financeiro"

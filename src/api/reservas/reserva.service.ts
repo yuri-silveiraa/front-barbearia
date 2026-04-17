@@ -1,6 +1,6 @@
 import { api } from "../http";
-import type { Reserva } from "../../features/reservas/types";
-import type { Barber, Service, TimeSlot, ReservaPayload } from "./types";
+import type { Reserva, ReservaStatus } from "../../features/reservas/types";
+import type { Barber, Service, TimeSlot, ReservaPayload, PaginatedReservas } from "./types";
 import { resolveApiImageUrl } from "../../utils/apiImage";
 
 type UnknownRecord = Record<string, unknown>;

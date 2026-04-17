@@ -1,3 +1,5 @@
+import type { Reserva } from "../../features/reservas/types";
+
 export interface Barber {
   id: string;
   name: string;

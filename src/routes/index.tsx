@@ -15,6 +15,7 @@ import AgendaBarbeiroPeriodoPage from "../features/barbeiro/pages/AgendaBarbeiro
 import BarbeirosPage from "../features/barbeiros/pages/BarbeirosPage";
 import FinanceiroPage from "../features/financeiro/pages/FinanceiroPage";
 import HomeClientePage from "../features/home/pages/HomeClientePage";
+import ClientesPage from "../features/clientes/pages/ClientesPage";
 
 export default function AppRoutes() {
   return (
@@ -103,6 +104,14 @@ export default function AppRoutes() {
             element={
               <RoleRoute allowedTypes={["BARBER"]} requireAdmin>
                 <BarbeirosPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="clientes"
+            element={
+              <RoleRoute allowedTypes={["BARBER"]} requireAdmin>
+                <ClientesPage />
               </RoleRoute>
             }
           />

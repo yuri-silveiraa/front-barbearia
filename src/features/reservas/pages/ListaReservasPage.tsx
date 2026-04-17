@@ -69,7 +69,6 @@ export function ListaReservasPage() {
   const [canceling, setCanceling] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
   const navigate = useNavigate();
   const hasFetched = useRef(false);
   const theme = useTheme();
@@ -81,7 +80,6 @@ export function ListaReservasPage() {
       const response = await getReservas(pageNumber, 10);
       setReservas(response.data);
       setTotalPages(response.totalPages);
-      setTotal(response.total);
       setPage(response.page);
       setError(null);
     } catch (err) {
@@ -102,6 +100,7 @@ export function ListaReservasPage() {
     () => ({
       next: reservas.filter(isFutureScheduled).length,
       completed: reservas.filter((reserva) => reserva.status === "COMPLETED").length,
+      canceled: reservas.filter((reserva) => reserva.status === "CANCELED").length,
     }),
     [reservas]
   );
