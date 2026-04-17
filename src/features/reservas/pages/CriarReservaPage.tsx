@@ -59,6 +59,7 @@ export default function CriarReservaPage() {
 
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [selectedServicesSnapshot, setSelectedServicesSnapshot] = useState<Service[]>([]);
   const [times, setTimes] = useState<TimeSlot[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState("");
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
@@ -80,8 +81,15 @@ export default function CriarReservaPage() {
     [barbers, selectedBarberId]
   );
   const selectedServicesList = useMemo(
-    () => services.filter((service) => selectedServiceIds.includes(service.id)),
-    [services, selectedServiceIds]
+    () => {
+      const byId = new Map<string, Service>();
+      selectedServicesSnapshot.forEach((service) => byId.set(service.id, service));
+      services.forEach((service) => byId.set(service.id, service));
+      return selectedServiceIds
+        .map((serviceId) => byId.get(serviceId))
+        .filter((service): service is Service => Boolean(service));
+    },
+    [services, selectedServiceIds, selectedServicesSnapshot]
   );
   const totalPrice = useMemo(
     () => selectedServicesList.reduce((sum, s) => sum + s.price, 0),
@@ -133,12 +141,12 @@ export default function CriarReservaPage() {
     }
   }, []);
 
-  const loadTimes = useCallback(async (barberId: string, serviceId: string) => {
+  const loadTimes = useCallback(async (barberId: string, serviceIds: string[]) => {
     setLoading(true);
     setError(null);
 
     try {
-      const res = await getTimesByBarber(barberId, serviceId);
+      const res = await getTimesByBarber(barberId, serviceIds);
       setTimes(res);
       if (res.length === 0) {
         setError("Nenhum horário disponível para este serviço no momento.");
@@ -160,14 +168,6 @@ export default function CriarReservaPage() {
   }, [loadInitialData]);
 
   useEffect(() => {
-    if (activeStep === 0) {
-      setServices([]);
-      setSelectedServiceIds([]);
-      setSelectedTimeId("");
-      setTimes([]);
-      return;
-    }
-
     if (activeStep !== 1) return;
 
     setFieldErrors((prev) => ({ ...prev, serviceIds: "", timeId: "" }));
@@ -192,11 +192,29 @@ export default function CriarReservaPage() {
     setFieldErrors((prev) => ({ ...prev, timeId: "" }));
 
     if (selectedBarberId && selectedServiceIds.length > 0) {
-      loadTimes(selectedBarberId, selectedServiceIds.join(","));
+      loadTimes(selectedBarberId, selectedServiceIds);
     } else {
       setTimes([]);
     }
   }, [activeStep, loadTimes, selectedBarberId, selectedServiceIds]);
+
+  const handleSelectBarber = (barberId: string) => {
+    setSelectedBarberId(barberId);
+    setServices([]);
+    setSelectedServiceIds([]);
+    setSelectedServicesSnapshot([]);
+    setSelectedTimeId("");
+    setTimes([]);
+    setFieldErrors((prev) => ({ ...prev, barberId: "", serviceIds: "", timeId: "" }));
+  };
+
+  const handleSelectServices = (serviceIds: string[]) => {
+    setSelectedServiceIds(serviceIds);
+    setSelectedServicesSnapshot(services.filter((service) => serviceIds.includes(service.id)));
+    setSelectedTimeId("");
+    setTimes([]);
+    setFieldErrors((prev) => ({ ...prev, serviceIds: "", timeId: "" }));
+  };
 
   const handleNext = () => {
     if (activeStep === 0 && !selectedBarberId) {
@@ -267,10 +285,7 @@ export default function CriarReservaPage() {
           <SelectBarber
             barbers={barbers}
             value={selectedBarberId}
-            onChange={(val) => {
-              setSelectedBarberId(val);
-              setFieldErrors((prev) => ({ ...prev, barberId: "" }));
-            }}
+            onChange={handleSelectBarber}
             loading={loading && !submitting}
             error={fieldErrors.barberId}
           />
@@ -280,10 +295,7 @@ export default function CriarReservaPage() {
           <SelectService
             services={services}
             value={selectedServiceIds}
-            onChange={(val) => {
-              setSelectedServiceIds(val);
-              setFieldErrors((prev) => ({ ...prev, serviceIds: "" }));
-            }}
+            onChange={handleSelectServices}
             loading={loading && !submitting}
             error={fieldErrors.serviceIds}
           />
@@ -310,6 +322,11 @@ export default function CriarReservaPage() {
     (activeStep === 0 && !!selectedBarberId) ||
     (activeStep === 1 && selectedServiceIds.length > 0) ||
     (activeStep === 2 && !!selectedTimeId);
+  const summaryLabel = selectedServicesList.length > 0
+    ? selectedServicesList.map((service) => service.name).join(" + ")
+    : activeStep === 0
+      ? "Escolha o barbeiro"
+      : "Escolha os serviços";
 
   return (
     <Box sx={{ width: "100%", maxWidth: 760, mx: "auto", pb: 2 }}>
@@ -402,9 +419,7 @@ export default function CriarReservaPage() {
                 Resumo
               </Typography>
               <Typography fontWeight={800} noWrap>
-                {selectedServicesList.length > 0
-                  ? selectedServicesList.map(s => s.name).join(" + ")
-                  : "Escolha os serviços"}
+                {summaryLabel}
               </Typography>
               {selectedServicesList.length > 0 && (
                 <Typography variant="caption" color="text.secondary">

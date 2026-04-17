@@ -1,10 +1,7 @@
 import {
   AppBar,
   Toolbar,
-  Typography,
   IconButton,
-  useMediaQuery,
-  useTheme,
   Box
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -20,8 +17,6 @@ interface HeaderProps {
 export function Header({ onMenuClick, showMenu = true }: HeaderProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
     <AppBar 
@@ -52,27 +47,23 @@ export function Header({ onMenuClick, showMenu = true }: HeaderProps) {
             </IconButton>
           )}
 
-          <Typography
-            variant={isMobile ? "body1" : "h6"}
-            component="div"
+          <Box
+            component="img"
+            src="/images/Logo-douglas-barbearia.png"
+            alt="Douglas Barbearia"
             onClick={() => navigate(user?.type === "BARBER" ? "/agenda" : "/home")}
             sx={{
               cursor: "pointer",
-              fontWeight: 700,
-              background: "linear-gradient(45deg, #00bfa5 30%, #ffab00 90%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              maxWidth: { xs: "calc(100% - 60px)", sm: "none" },
+              width: { xs: 42, sm: 48 },
+              height: { xs: 42, sm: 48 },
+              objectFit: "contain",
+              display: "block",
+              filter: "drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18))",
               "&:hover": {
                 opacity: 0.8
               }
             }}
-          >
-            Douglas Barbearia
-          </Typography>
+          />
         </Box>
 
         <UserMenu user={user} />

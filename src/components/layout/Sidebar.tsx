@@ -142,23 +142,23 @@ export function Sidebar({ open, onClose, user }: SidebarProps) {
     >
       <Box
         sx={{
-          p: 3,
+          p: 2.5,
           display: "flex",
           alignItems: "center",
           justifyContent: "center"
         }}
       >
-        <Typography
-          variant="h6"
+        <Box
+          component="img"
+          src="/images/Logo-douglas-barbearia.png"
+          alt="Douglas Barbearia"
           sx={{
-            fontWeight: 700,
-            background: "linear-gradient(45deg, #00bfa5 30%, #ffab00 90%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent"
+            width: 112,
+            height: 112,
+            objectFit: "contain",
+            filter: "drop-shadow(0 12px 20px rgba(0, 0, 0, 0.35))"
           }}
-        >
-          Douglas Barbearia
-        </Typography>
+        />
       </Box>
 
       <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />

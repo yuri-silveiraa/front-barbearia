@@ -94,7 +94,9 @@ const SelectService: FC<SelectServiceProps> = ({
                 color: "inherit",
                 cursor: loading ? "default" : "pointer",
                 display: "grid",
-                gridTemplateColumns: service.imagemUrl ? "72px minmax(0, 1fr) auto" : "minmax(0, 1fr) auto",
+                gridTemplateColumns: service.imagemUrl
+                  ? { xs: "86px minmax(0, 1fr) auto", sm: "96px minmax(0, 1fr) auto" }
+                  : "minmax(0, 1fr) auto",
                 gap: 1.5,
                 alignItems: "center",
                 textAlign: "left",
@@ -108,9 +110,9 @@ const SelectService: FC<SelectServiceProps> = ({
                   src={service.imagemUrl}
                   alt={service.name}
                   sx={{
-                    width: 72,
-                    height: 72,
-                    borderRadius: "8px",
+                    width: { xs: 86, sm: 96 },
+                    height: { xs: 108, sm: 120 },
+                    borderRadius: 2,
                     objectFit: "cover",
                     bgcolor: "action.hover",
                   }}

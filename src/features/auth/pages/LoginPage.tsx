@@ -101,6 +101,7 @@ export function LoginPage() {
         title="Douglas Barbearia"
         subtitle="Entre na sua conta para continuar"
         backgroundImage="/images/barbeiro-background-login.jpg"
+        logoSrc="/images/Logo-douglas-barbearia.png"
       >
           <Box sx={{ mb: 3, display: "flex", justifyContent: "center" }}>
             {showGoogleLogin && (

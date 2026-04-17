@@ -9,6 +9,7 @@ interface AuthLayoutProps {
   showBack?: boolean;
   onBack?: () => void;
   backgroundImage?: string;
+  logoSrc?: string;
 }
 
 export function AuthLayout({
@@ -17,7 +18,8 @@ export function AuthLayout({
   children,
   showBack,
   onBack,
-  backgroundImage
+  backgroundImage,
+  logoSrc
 }: AuthLayoutProps) {
   const background = backgroundImage
     ? `linear-gradient(135deg, rgba(10, 16, 26, 0.9) 0%, rgba(10, 16, 26, 0.7) 50%, rgba(10, 16, 26, 0.9) 100%), url(${backgroundImage})`
@@ -62,22 +64,39 @@ export function AuthLayout({
           )}
 
           <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Box
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #00bfa5 0%, #ffab00 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                mx: "auto",
-                mb: 2,
-                boxShadow: "0 10px 24px rgba(0, 191, 165, 0.35)"
-              }}
-            >
-              <ContentCutIcon sx={{ color: "white", fontSize: 30 }} />
-            </Box>
+            {logoSrc ? (
+              <Box
+                component="img"
+                src={logoSrc}
+                alt={title}
+                sx={{
+                  width: { xs: 104, sm: 120 },
+                  height: { xs: 104, sm: 120 },
+                  objectFit: "contain",
+                  display: "block",
+                  mx: "auto",
+                  mb: 1.5,
+                  filter: "drop-shadow(0 14px 24px rgba(0, 0, 0, 0.42))"
+                }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #00bfa5 0%, #ffab00 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mx: "auto",
+                  mb: 2,
+                  boxShadow: "0 10px 24px rgba(0, 191, 165, 0.35)"
+                }}
+              >
+                <ContentCutIcon sx={{ color: "white", fontSize: 30 }} />
+              </Box>
+            )}
 
             <Typography
               variant="h4"

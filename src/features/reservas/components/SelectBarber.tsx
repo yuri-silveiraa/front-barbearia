@@ -1,5 +1,5 @@
 import { type FC } from "react";
-import { Avatar, Box, Paper, Typography } from "@mui/material";
+import { Box, Paper, Typography } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PersonIcon from "@mui/icons-material/Person";
 import { SelectionListSkeleton } from "../../../components/skeletons/SelectionSkeletons";
@@ -81,21 +81,46 @@ const SelectBarber: FC<SelectBarberProps> = ({
                 color: "inherit",
                 cursor: loading ? "default" : "pointer",
                 display: "grid",
-                gridTemplateColumns: "100px minmax(0, 1fr) auto",
-                gap: 2.5,
+                gridTemplateColumns: { xs: "86px minmax(0, 1fr) auto", sm: "96px minmax(0, 1fr) auto" },
+                gap: { xs: 1.5, sm: 2 },
                 alignItems: "center",
                 textAlign: "left",
                 transition: "background-color 0.2s ease, border-color 0.2s ease",
                 "&:hover": loading ? undefined : { borderColor: "primary.main" },
               }}
             >
-              <Avatar
-                src={barber.profileImageUrl || undefined}
-                alt={barber.name}
-                sx={{ width: 100, height: 100, bgcolor: selected ? "primary.main" : "action.hover" }}
+              <Box
+                sx={{
+                  width: { xs: 86, sm: 96 },
+                  height: { xs: 108, sm: 120 },
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  bgcolor: selected ? "rgba(0, 191, 165, 0.16)" : "action.hover",
+                  border: "1px solid",
+                  borderColor: selected ? "primary.main" : "divider",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
               >
-                {getInitials(barber.name)}
-              </Avatar>
+                {barber.profileImageUrl ? (
+                  <Box
+                    component="img"
+                    src={barber.profileImageUrl}
+                    alt={barber.name}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <Typography variant="h5" fontWeight={900} color={selected ? "primary.main" : "text.secondary"}>
+                    {getInitials(barber.name)}
+                  </Typography>
+                )}
+              </Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="h5" fontWeight={800} noWrap>
                   {barber.name}
