@@ -4,16 +4,22 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   LinearProgress,
   Paper,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import {
   criarReserva,
   getBarbers,
@@ -26,6 +32,7 @@ import CalendarTimePicker from "../components/SelectCalendarTimePicker";
 import SelectBarber from "../components/SelectBarber";
 import SelectService from "../components/SelectService";
 import type { Barber, Service, TimeSlot } from "../../../api/reservas/types";
+import { formatWhatsapp, onlyDigits } from "../../../utils/customerInput";
 
 const steps = [
   { label: "Barbeiro", icon: <PersonIcon fontSize="small" /> },
@@ -54,7 +61,7 @@ function formatSlotDate(value: string) {
 }
 
 export default function CriarReservaPage() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const navigate = useNavigate();
 
   const [barbers, setBarbers] = useState<Barber[]>([]);
@@ -68,6 +75,9 @@ export default function CriarReservaPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
+  const [whatsappInput, setWhatsappInput] = useState("");
+  const [whatsappError, setWhatsappError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({
     barberId: "",
     serviceIds: "",
@@ -236,7 +246,7 @@ export default function CriarReservaPage() {
     setActiveStep((prev) => Math.max(prev - 1, 0));
   };
 
-  const handleSubmit = async () => {
+  const createAppointment = async () => {
     if (!user?.id) {
       setError("Usuário não autenticado. Faça login novamente.");
       return;
@@ -272,6 +282,48 @@ export default function CriarReservaPage() {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Verifique os dados";
       setError(`Erro ao criar agendamento: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!user?.id) {
+      setError("Usuário não autenticado. Faça login novamente.");
+      return;
+    }
+
+    if (onlyDigits(user.phone ?? "").length < 10) {
+      setWhatsappInput(formatWhatsapp(user.phone ?? ""));
+      setWhatsappError("");
+      setWhatsappDialogOpen(true);
+      return;
+    }
+
+    await createAppointment();
+  };
+
+  const handleSaveWhatsappAndContinue = async () => {
+    const digits = onlyDigits(whatsappInput);
+    if (digits.length !== 11) {
+      setWhatsappError("Informe um WhatsApp com DDD e 9 dígitos.");
+      return;
+    }
+
+    setSubmitting(true);
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+    setWhatsappError("");
+
+    try {
+      await updateUser({ telephone: digits });
+      setWhatsappDialogOpen(false);
+      await createAppointment();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao salvar WhatsApp";
+      setWhatsappError(message);
     } finally {
       setLoading(false);
       setSubmitting(false);
@@ -472,6 +524,47 @@ export default function CriarReservaPage() {
           </Box>
         </Stack>
       </Paper>
+
+      <Dialog
+        open={whatsappDialogOpen}
+        onClose={() => !submitting && setWhatsappDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{ sx: { borderRadius: 2, m: { xs: 1.5, sm: 3 } } }}
+      >
+        <DialogTitle>Informe seu WhatsApp</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Precisamos do seu WhatsApp para confirmar o agendamento e enviar lembretes.
+          </Typography>
+          <TextField
+            autoFocus
+            fullWidth
+            label="WhatsApp"
+            placeholder="(__) _____-____"
+            value={whatsappInput}
+            onChange={(event) => {
+              setWhatsappInput(formatWhatsapp(event.target.value));
+              setWhatsappError("");
+            }}
+            error={!!whatsappError}
+            helperText={whatsappError || "Ex: (11) 91234-5678"}
+            autoComplete="tel"
+            inputProps={{ inputMode: "numeric" }}
+            InputProps={{
+              startAdornment: <WhatsAppIcon color="action" sx={{ mr: 1 }} />,
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
+          <Button onClick={() => setWhatsappDialogOpen(false)} disabled={submitting} fullWidth>
+            Cancelar
+          </Button>
+          <Button variant="contained" onClick={handleSaveWhatsappAndContinue} disabled={submitting} fullWidth>
+            {submitting ? "Salvando..." : "Salvar e continuar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

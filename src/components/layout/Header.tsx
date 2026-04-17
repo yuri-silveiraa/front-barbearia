@@ -2,7 +2,8 @@ import {
   AppBar,
   Toolbar,
   IconButton,
-  Box
+  Box,
+  Typography
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate } from "react-router-dom";
@@ -35,7 +36,7 @@ export function Header({ onMenuClick, showMenu = true }: HeaderProps) {
         px: { xs: 1, sm: 2 },
         width: "100%",
       }}>
-        <Box sx={{ display: "flex", alignItems: "center", flex: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
           {showMenu && (
             <IconButton
               edge="start"
@@ -48,22 +49,49 @@ export function Header({ onMenuClick, showMenu = true }: HeaderProps) {
           )}
 
           <Box
-            component="img"
-            src="/images/Logo-douglas-barbearia.png"
-            alt="Douglas Barbearia"
+            component="button"
             onClick={() => navigate(user?.type === "BARBER" ? "/agenda" : "/home")}
             sx={{
+              border: 0,
+              p: 0,
+              bgcolor: "transparent",
               cursor: "pointer",
-              width: { xs: 42, sm: 48 },
-              height: { xs: 42, sm: 48 },
-              objectFit: "contain",
-              display: "block",
-              filter: "drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18))",
+              display: "flex",
+              alignItems: "center",
+              gap: { xs: 0.75, sm: 1 },
+              minWidth: 0,
               "&:hover": {
                 opacity: 0.8
               }
             }}
-          />
+          >
+            <Box
+              component="img"
+              src="/images/Logo-douglas-barbearia.png"
+              alt="Douglas Barbearia"
+              sx={{
+                width: { xs: 42, sm: 48 },
+                height: { xs: 42, sm: 48 },
+                objectFit: "contain",
+                display: "block",
+                filter: "drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18))",
+                flexShrink: 0,
+              }}
+            />
+            <Typography
+              component="span"
+              sx={{
+                display: { xs: "none", sm: "block" },
+                fontWeight: 900,
+                letterSpacing: "-0.04em",
+                color: "text.primary",
+                lineHeight: 1,
+                whiteSpace: "nowrap",
+              }}
+            >
+              Douglas Barbearia
+            </Typography>
+          </Box>
         </Box>
 
         <UserMenu user={user} />

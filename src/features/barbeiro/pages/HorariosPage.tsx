@@ -9,11 +9,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Drawer,
   FormControlLabel,
   IconButton,
   Paper,
-  Popover,
   Stack,
   Skeleton,
   TextField,
@@ -109,6 +107,13 @@ function formatSlotRange(slot: TimeSlot) {
   return `${dayjs(slot.startAt).format("HH:mm")} - ${dayjs(slot.endAt).format("HH:mm")}`;
 }
 
+function formatBreakRange(slots: TimeSlot[]) {
+  const slotWithBreak = slots.find((slot) => slot.breakStartAt && slot.breakEndAt);
+  if (!slotWithBreak?.breakStartAt || !slotWithBreak.breakEndAt) return null;
+
+  return `${dayjs(slotWithBreak.breakStartAt).format("HH:mm")} - ${dayjs(slotWithBreak.breakEndAt).format("HH:mm")}`;
+}
+
 export default function HorariosPage() {
   const [config, setConfig] = useState<TimeConfig>(defaultConfig);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
@@ -117,7 +122,7 @@ export default function HorariosPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loadingSlots, setLoadingSlots] = useState(true);
-  const [selectedDayAnchor, setSelectedDayAnchor] = useState<{ el: HTMLElement | null; date: string } | null>(null);
+  const [selectedDayAnchor, setSelectedDayAnchor] = useState<{ date: string } | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, loading: false });
   const theme = useTheme();
@@ -218,6 +223,12 @@ export default function HorariosPage() {
       .filter((slot) => dayjs(slot.startAt).format("YYYY-MM-DD") === dateStr)
       .sort((a, b) => dayjs(a.startAt).unix() - dayjs(b.startAt).unix());
 
+  const selectedDaySlots = useMemo(
+    () => (selectedDayAnchor ? getSlotsForDay(selectedDayAnchor.date) : []),
+    [selectedDayAnchor, timeSlots]
+  );
+  const selectedDayBreakRange = useMemo(() => formatBreakRange(selectedDaySlots), [selectedDaySlots]);
+
   const upcomingSlots = useMemo(
     () => timeSlots.filter((slot) => dayjs(slot.endAt).isAfter(dayjs())).length,
     [timeSlots]
@@ -274,7 +285,7 @@ export default function HorariosPage() {
 
   const handleSelectAll = () => {
     if (!selectedDayAnchor) return;
-    const daySlots = getSlotsForDay(selectedDayAnchor.date).map((slot) => slot.id);
+    const daySlots = selectedDaySlots.map((slot) => slot.id);
     setSelectedSlots((slots) => (slots.length === daySlots.length ? [] : daySlots));
   };
 
@@ -316,15 +327,39 @@ export default function HorariosPage() {
         </IconButton>
       </Box>
 
-      {selectedDayAnchor && getSlotsForDay(selectedDayAnchor.date).length === 0 ? (
+      {selectedDayBreakRange && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 1.25,
+            mb: 1.5,
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "rgba(255, 152, 0, 0.28)",
+            bgcolor: "rgba(255, 152, 0, 0.08)",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          <RestaurantIcon color="warning" fontSize="small" />
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              Intervalo
+            </Typography>
+            <Typography fontWeight={800}>{selectedDayBreakRange}</Typography>
+          </Box>
+        </Paper>
+      )}
+
+      {selectedDayAnchor && selectedDaySlots.length === 0 ? (
         <Typography color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
           Nenhum horário disponível
         </Typography>
       ) : (
         <>
           <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, mb: 2 }}>
-            {selectedDayAnchor &&
-              getSlotsForDay(selectedDayAnchor.date).map((slot) => {
+            {selectedDaySlots.map((slot) => {
                 const checked = selectedSlots.includes(slot.id);
                 return (
                   <Paper
@@ -355,7 +390,7 @@ export default function HorariosPage() {
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
             <Button size="small" onClick={handleSelectAll} disabled={!selectedDayAnchor}>
-              {selectedDayAnchor && selectedSlots.length === getSlotsForDay(selectedDayAnchor.date).length
+              {selectedDayAnchor && selectedSlots.length === selectedDaySlots.length
                 ? "Desmarcar todos"
                 : "Selecionar todos"}
             </Button>
@@ -633,7 +668,7 @@ export default function HorariosPage() {
                   if (!date) return;
                   const dateStr = date.format("YYYY-MM-DD");
                   if (daysWithSlots.has(dateStr)) {
-                    setSelectedDayAnchor({ el: null, date: dateStr });
+                    setSelectedDayAnchor({ date: dateStr });
                   }
                 }}
                 minDate={dayjs()}
@@ -651,32 +686,16 @@ export default function HorariosPage() {
         </Paper>
       </Box>
 
-      {isMobile ? (
-        <Drawer
-          anchor="bottom"
-          open={!!selectedDayAnchor}
-          onClose={closeSelectedDay}
-          PaperProps={{
-            sx: {
-              bgcolor: "background.paper",
-              borderRadius: "8px 8px 0 0",
-            },
-          }}
-        >
-          {slotManager}
-        </Drawer>
-      ) : (
-        <Popover
-          open={!!selectedDayAnchor}
-          anchorEl={selectedDayAnchor?.el}
-          onClose={closeSelectedDay}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          transformOrigin={{ vertical: "top", horizontal: "center" }}
-          PaperProps={{ sx: { bgcolor: "background.paper", minWidth: 340, borderRadius: 2 } }}
-        >
-          {slotManager}
-        </Popover>
-      )}
+      <Dialog
+        open={!!selectedDayAnchor}
+        onClose={closeSelectedDay}
+        fullWidth
+        maxWidth="xs"
+        fullScreen={isMobile}
+        PaperProps={{ sx: { bgcolor: "background.paper", borderRadius: { xs: 0, sm: 2 } } }}
+      >
+        {slotManager}
+      </Dialog>
 
       <Dialog
         open={deleteDialog.open}

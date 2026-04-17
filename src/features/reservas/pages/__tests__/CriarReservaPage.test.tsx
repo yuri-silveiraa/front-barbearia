@@ -10,6 +10,14 @@ import {
 import type { Barber, Service, TimeSlot } from "../../../../api/reservas/types";
 
 const navigateMock = vi.fn();
+const updateUserMock = vi.fn();
+const authUser = {
+  id: "client-1",
+  name: "Cliente",
+  email: "cliente@barbearia.local",
+  type: "CLIENT" as const,
+  phone: "11912345678",
+};
 
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
@@ -21,12 +29,8 @@ vi.mock("react-router-dom", async () => {
 
 vi.mock("../../../../contexts/AuthContext", () => ({
   useAuth: () => ({
-    user: {
-      id: "client-1",
-      name: "Cliente",
-      email: "cliente@barbearia.local",
-      type: "CLIENT",
-    },
+    user: authUser,
+    updateUser: updateUserMock,
   }),
 }));
 
@@ -157,6 +161,7 @@ function setupMocks() {
   vi.mocked(getServices).mockImplementation(async (barberId) => servicesByBarber[barberId ?? "barber-1"] ?? []);
   vi.mocked(getTimesByBarber).mockResolvedValue(slots);
   vi.mocked(criarReserva).mockResolvedValue({ id: "appointment-1" } as never);
+  updateUserMock.mockResolvedValue({ ...authUser });
 }
 
 function renderPage() {
@@ -170,6 +175,7 @@ function renderPage() {
 describe("CriarReservaPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authUser.phone = "11912345678";
     setupMocks();
   });
 
@@ -236,6 +242,35 @@ describe("CriarReservaPage", () => {
     expect(screen.getByTestId("selected-time")).toHaveTextContent("");
     await waitFor(() => {
       expect(getTimesByBarber).toHaveBeenLastCalledWith("barber-1", ["service-1", "service-2"]);
+    });
+  });
+
+  it("solicita WhatsApp antes de criar reserva quando o cliente não tem telefone", async () => {
+    authUser.phone = "";
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Douglas" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Corte Tradicional" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.click(await screen.findByRole("button", { name: "2026-04-18T12:00:00.000Z" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+
+    expect(await screen.findByRole("dialog")).toHaveTextContent("Informe seu WhatsApp");
+    expect(criarReserva).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText("WhatsApp"), { target: { value: "11987654321" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar e continuar" }));
+
+    await waitFor(() => {
+      expect(updateUserMock).toHaveBeenCalledWith({ telephone: "11987654321" });
+      expect(criarReserva).toHaveBeenCalledWith({
+        barberId: "barber-1",
+        clientId: "client-1",
+        serviceIds: ["service-1"],
+        startAt: "2026-04-18T12:00:00.000Z",
+      });
     });
   });
 });
